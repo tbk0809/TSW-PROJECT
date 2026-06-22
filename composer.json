@@ -1,0 +1,21 @@
+{
+    "name": "smart-cds/clinical-decision-system",
+    "description": "Smart Clinical Decision System - PHP Backend with SPARQL/OWL Reasoning",
+    "type": "project",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=8.0",
+        "easyrdf/easyrdf": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Controllers\\": "controllers/",
+            "Models\\": "models/",
+            "Services\\": "services/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

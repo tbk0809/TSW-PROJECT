@@ -1,0 +1,27 @@
+RewriteEngine On
+
+# Redirect Trailing Slashes
+RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+# Handle API Routes
+RewriteRule ^api/(.*)$ api/api.php?action=$1 [QSA,L]
+
+# Handle Front Controller
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?page=$1 [QSA,L]
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "\.(htaccess|htpasswd|ini|log|sh|sql|owl|ttl)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Allow access to CSS, JS, images
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
