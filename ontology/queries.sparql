@@ -1,0 +1,216 @@
+########################################################################
+# Smart Clinical Decision System — SPARQL Queries
+#
+# 8 SELECT queries for clinical decision support analytics.
+# All queries use PREFIX cds: <http://www.semanticweb.org/clinical-decision-system#>
+# Compatible with Apache Jena Fuseki and any SPARQL 1.1 endpoint.
+########################################################################
+
+
+# ======================================================================
+# QUERY 1: List all patients with HighRisk level
+# Clinical Purpose: Identify all high-risk patients for prioritized care,
+# showing their name, age, and diagnosed disease. This enables triage
+# nurses and physicians to quickly focus on the most critical cases.
+# ======================================================================
+
+PREFIX cds: <http://www.semanticweb.org/clinical-decision-system#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?patientName ?patientAge ?diseaseName
+WHERE {
+    ?patient    rdf:type                cds:Patient .
+    ?patient    cds:patientName         ?patientName .
+    ?patient    cds:patientAge          ?patientAge .
+    ?patient    cds:hasRiskLevel        ?riskLevel .
+    ?riskLevel  rdf:type                cds:HighRisk .
+    ?patient    cds:diagnosedWith       ?disease .
+    ?disease    cds:diseaseName         ?diseaseName .
+}
+ORDER BY ?patientName
+
+
+# ======================================================================
+# QUERY 2: Find all medications for a given disease
+# Clinical Purpose: Given a disease name (parameterized), retrieve all
+# medications that treat it along with their dosages. This supports
+# formulary lookup and prescription decision-making at the point of care.
+# ======================================================================
+
+PREFIX cds: <http://www.semanticweb.org/clinical-decision-system#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?medicationName ?dosage
+WHERE {
+    ?medication rdf:type            cds:Medication .
+    ?medication cds:medicationName  ?medicationName .
+    ?medication cds:dosage          ?dosage .
+    ?medication cds:treatsDisease   ?disease .
+    ?disease    cds:diseaseName     ?diseaseName .
+    FILTER (?diseaseName = "Hypertension"^^xsd:string)
+}
+ORDER BY ?medicationName
+
+
+# ======================================================================
+# QUERY 3: Get all symptoms of a specific patient by patientID
+# Clinical Purpose: Retrieve the full symptom profile for a specific
+# patient using their unique patient ID. This is essential for clinical
+# review, handoff between shifts, and electronic health record display.
+# ======================================================================
+
+PREFIX cds: <http://www.semanticweb.org/clinical-decision-system#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?symptomName
+WHERE {
+    ?patient    rdf:type            cds:Patient .
+    ?patient    cds:patientID       ?patientID .
+    ?patient    cds:hasSymptom      ?symptom .
+    ?symptom    cds:symptomName     ?symptomName .
+    FILTER (?patientID = "P001"^^xsd:string)
+}
+ORDER BY ?symptomName
+
+
+# ======================================================================
+# QUERY 4: Count patients per risk level
+# Clinical Purpose: Provide an aggregate dashboard view of patient
+# distribution across risk levels. Hospital administrators and quality
+# officers use this to allocate resources and monitor patient acuity.
+# ======================================================================
+
+PREFIX cds: <http://www.semanticweb.org/clinical-decision-system#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?riskLevelClass (COUNT(?patient) AS ?patientCount)
+WHERE {
+    ?patient    rdf:type            cds:Patient .
+    ?patient    cds:hasRiskLevel    ?riskLevel .
+    ?riskLevel  rdf:type            ?riskLevelClass .
+    FILTER (?riskLevelClass IN (cds:LowRisk, cds:MediumRisk, cds:HighRisk))
+}
+GROUP BY ?riskLevelClass
+ORDER BY ?riskLevelClass
+
+
+# ======================================================================
+# QUERY 5: Find patients with more than 2 symptoms
+# Clinical Purpose: Identify patients presenting with complex
+# symptomatology (>2 symptoms), who may require specialist consultation
+# or additional diagnostic workup. Corresponds to the ComplexCase and
+# HighRiskPatient inferred classes in the ontology.
+# ======================================================================
+
+PREFIX cds: <http://www.semanticweb.org/clinical-decision-system#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?patientName (COUNT(?symptom) AS ?symptomCount)
+WHERE {
+    ?patient    rdf:type            cds:Patient .
+    ?patient    cds:patientName     ?patientName .
+    ?patient    cds:hasSymptom      ?symptom .
+}
+GROUP BY ?patientName
+HAVING (COUNT(?symptom) > 2)
+ORDER BY DESC(?symptomCount)
+
+
+# ======================================================================
+# QUERY 6: Detect drug contraindications
+# Clinical Purpose: Find all pairs of medications that are
+# contraindicated with each other. This is a critical patient safety
+# query used by pharmacists and prescribing physicians to prevent
+# adverse drug events before dispensing medications.
+# ======================================================================
+
+PREFIX cds: <http://www.semanticweb.org/clinical-decision-system#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?medication1Name ?medication2Name
+WHERE {
+    ?med1   rdf:type                    cds:Medication .
+    ?med1   cds:medicationName          ?medication1Name .
+    ?med1   cds:contraindicatedWith     ?med2 .
+    ?med2   rdf:type                    cds:Medication .
+    ?med2   cds:medicationName          ?medication2Name .
+}
+ORDER BY ?medication1Name ?medication2Name
+
+
+# ======================================================================
+# QUERY 7: Get full clinical summary for a patient
+# Clinical Purpose: Generate a comprehensive clinical summary for a
+# single patient, including demographics, all symptoms, diagnoses,
+# prescribed medications, risk level, and lab results. Uses OPTIONAL
+# clauses to handle incomplete data gracefully. This query powers
+# patient dashboard views in clinical information systems.
+# ======================================================================
+
+PREFIX cds: <http://www.semanticweb.org/clinical-decision-system#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?patientName ?patientAge ?symptomName ?diseaseName
+       ?medicationName ?riskLevelClass ?testName ?testValue
+WHERE {
+    ?patient    rdf:type            cds:Patient .
+    ?patient    cds:patientName     ?patientName .
+    ?patient    cds:patientID       ?patientID .
+    FILTER (?patientID = "P001"^^xsd:string)
+
+    OPTIONAL {
+        ?patient    cds:patientAge  ?patientAge .
+    }
+    OPTIONAL {
+        ?patient    cds:hasSymptom  ?symptom .
+        ?symptom    cds:symptomName ?symptomName .
+    }
+    OPTIONAL {
+        ?patient    cds:diagnosedWith   ?disease .
+        ?disease    cds:diseaseName     ?diseaseName .
+    }
+    OPTIONAL {
+        ?patient    cds:prescribedMedication    ?medication .
+        ?medication cds:medicationName          ?medicationName .
+    }
+    OPTIONAL {
+        ?patient    cds:hasRiskLevel    ?riskLevel .
+        ?riskLevel  rdf:type            ?riskLevelClass .
+        FILTER (?riskLevelClass IN (cds:LowRisk, cds:MediumRisk, cds:HighRisk))
+    }
+    OPTIONAL {
+        ?patient    cds:hasLabResult    ?labResult .
+        ?labResult  cds:testName        ?testName .
+        ?labResult  cds:testValue       ?testValue .
+    }
+}
+ORDER BY ?symptomName
+
+
+# ======================================================================
+# QUERY 8: Find diseases diagnosed in patients over age 50
+# Clinical Purpose: Identify diseases prevalent in the over-50 patient
+# population. This supports epidemiological analysis, geriatric care
+# planning, and chronic disease management programs. The FILTER clause
+# restricts results to patients whose age exceeds 50.
+# ======================================================================
+
+PREFIX cds: <http://www.semanticweb.org/clinical-decision-system#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?patientName ?patientAge ?diseaseName
+WHERE {
+    ?patient    rdf:type            cds:Patient .
+    ?patient    cds:patientName     ?patientName .
+    ?patient    cds:patientAge      ?patientAge .
+    ?patient    cds:diagnosedWith   ?disease .
+    ?disease    cds:diseaseName     ?diseaseName .
+    FILTER (?patientAge > 50)
+}
+ORDER BY DESC(?patientAge) ?patientName

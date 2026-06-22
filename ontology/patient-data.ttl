@@ -1,0 +1,478 @@
+########################################################################
+# Smart Clinical Decision System — Patient Data (RDF Turtle)
+#
+# This file contains 10 complete patient records along with all
+# supporting individuals (symptoms, diseases, medications, doctors,
+# lab results, clinical records, risk levels) and relationship triples
+# (treatsDisease, indicatesDisease, contraindicatedWith, interactsWith,
+# isRelatedConditionOf, treatsPatient).
+#
+# Namespace: cds: = http://www.semanticweb.org/clinical-decision-system#
+# Compatible with the clinical-decision.owl ontology.
+########################################################################
+
+@prefix cds:  <http://www.semanticweb.org/clinical-decision-system#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+
+########################################################################
+# Risk Level Instances
+########################################################################
+
+cds:LowRisk_Instance
+    a               cds:LowRisk ;
+    rdfs:label      "Low Risk"@en .
+
+cds:MediumRisk_Instance
+    a               cds:MediumRisk ;
+    rdfs:label      "Medium Risk"@en .
+
+cds:HighRisk_Instance
+    a               cds:HighRisk ;
+    rdfs:label      "High Risk"@en .
+
+
+########################################################################
+# Symptoms (20 total)
+########################################################################
+
+cds:Headache            a cds:Symptom ; cds:symptomName "Headache"^^xsd:string .
+cds:Dizziness           a cds:Symptom ; cds:symptomName "Dizziness"^^xsd:string .
+cds:Fever               a cds:Symptom ; cds:symptomName "Fever"^^xsd:string .
+cds:Cough               a cds:Symptom ; cds:symptomName "Cough"^^xsd:string .
+cds:ShortnessOfBreath   a cds:Symptom ; cds:symptomName "Shortness of Breath"^^xsd:string .
+cds:Fatigue             a cds:Symptom ; cds:symptomName "Fatigue"^^xsd:string .
+cds:FrequentUrination   a cds:Symptom ; cds:symptomName "Frequent Urination"^^xsd:string .
+cds:BlurredVision       a cds:Symptom ; cds:symptomName "Blurred Vision"^^xsd:string .
+cds:ChestPain           a cds:Symptom ; cds:symptomName "Chest Pain"^^xsd:string .
+cds:Rash                a cds:Symptom ; cds:symptomName "Rash"^^xsd:string .
+cds:Itching             a cds:Symptom ; cds:symptomName "Itching"^^xsd:string .
+cds:JointPain           a cds:Symptom ; cds:symptomName "Joint Pain"^^xsd:string .
+cds:Swelling            a cds:Symptom ; cds:symptomName "Swelling"^^xsd:string .
+cds:Nausea              a cds:Symptom ; cds:symptomName "Nausea"^^xsd:string .
+cds:AbdominalPain       a cds:Symptom ; cds:symptomName "Abdominal Pain"^^xsd:string .
+cds:SoreThroat          a cds:Symptom ; cds:symptomName "Sore Throat"^^xsd:string .
+cds:Anxiety             a cds:Symptom ; cds:symptomName "Anxiety"^^xsd:string .
+cds:Insomnia            a cds:Symptom ; cds:symptomName "Insomnia"^^xsd:string .
+cds:Vomiting            a cds:Symptom ; cds:symptomName "Vomiting"^^xsd:string .
+cds:Hypertension_Symptom a cds:Symptom ; cds:symptomName "Hypertension Symptom"^^xsd:string .
+
+
+########################################################################
+# Diseases (11 total, including HeartFailure for transitivity)
+########################################################################
+
+cds:Hypertension          a cds:Disease ; cds:diseaseName "Hypertension"^^xsd:string .
+cds:Pneumonia             a cds:Disease ; cds:diseaseName "Pneumonia"^^xsd:string .
+cds:Type2Diabetes         a cds:Disease ; cds:diseaseName "Type 2 Diabetes"^^xsd:string .
+cds:CoronaryArteryDisease a cds:Disease ; cds:diseaseName "Coronary Artery Disease"^^xsd:string .
+cds:HeartFailure          a cds:Disease ; cds:diseaseName "Heart Failure"^^xsd:string .
+cds:AllergicReaction      a cds:Disease ; cds:diseaseName "Allergic Reaction"^^xsd:string .
+cds:RheumatoidArthritis   a cds:Disease ; cds:diseaseName "Rheumatoid Arthritis"^^xsd:string .
+cds:Migraine              a cds:Disease ; cds:diseaseName "Migraine"^^xsd:string .
+cds:Appendicitis          a cds:Disease ; cds:diseaseName "Appendicitis"^^xsd:string .
+cds:Tonsillitis           a cds:Disease ; cds:diseaseName "Tonsillitis"^^xsd:string .
+cds:AnxietyDisorder       a cds:Disease ; cds:diseaseName "Anxiety Disorder"^^xsd:string .
+
+
+########################################################################
+# Medications (10 total, including SurgicalTreatment as Medication)
+########################################################################
+
+cds:Amlodipine
+    a               cds:Medication ;
+    cds:medicationName "Amlodipine"^^xsd:string ;
+    cds:dosage      "5mg daily"^^xsd:string ;
+    cds:treatsDisease cds:Hypertension .
+
+cds:Amoxicillin
+    a               cds:Medication ;
+    cds:medicationName "Amoxicillin"^^xsd:string ;
+    cds:dosage      "500mg three times daily"^^xsd:string ;
+    cds:treatsDisease cds:Pneumonia .
+
+cds:Metformin
+    a               cds:Medication ;
+    cds:medicationName "Metformin"^^xsd:string ;
+    cds:dosage      "500mg twice daily"^^xsd:string ;
+    cds:treatsDisease cds:Type2Diabetes ;
+    # Symmetric: reasoner infers Diazepam interactsWith Metformin
+    cds:interactsWith cds:Diazepam .
+
+cds:Aspirin
+    a               cds:Medication ;
+    cds:medicationName "Aspirin"^^xsd:string ;
+    cds:dosage      "81mg daily"^^xsd:string ;
+    cds:treatsDisease cds:CoronaryArteryDisease ;
+    # Contraindication: Aspirin should not be taken with Ibuprofen
+    cds:contraindicatedWith cds:Ibuprofen .
+
+cds:Antihistamine
+    a               cds:Medication ;
+    cds:medicationName "Antihistamine"^^xsd:string ;
+    cds:dosage      "10mg daily"^^xsd:string ;
+    cds:treatsDisease cds:AllergicReaction .
+
+cds:Ibuprofen
+    a               cds:Medication ;
+    cds:medicationName "Ibuprofen"^^xsd:string ;
+    cds:dosage      "400mg three times daily"^^xsd:string ;
+    cds:treatsDisease cds:RheumatoidArthritis .
+
+cds:Sumatriptan
+    a               cds:Medication ;
+    cds:medicationName "Sumatriptan"^^xsd:string ;
+    cds:dosage      "50mg as needed"^^xsd:string ;
+    cds:treatsDisease cds:Migraine .
+
+cds:SurgicalTreatment
+    a               cds:Medication ;
+    cds:medicationName "Surgical Treatment"^^xsd:string ;
+    cds:dosage      "Appendectomy procedure"^^xsd:string ;
+    cds:treatsDisease cds:Appendicitis .
+
+cds:Penicillin
+    a               cds:Medication ;
+    cds:medicationName "Penicillin"^^xsd:string ;
+    cds:dosage      "250mg four times daily"^^xsd:string ;
+    cds:treatsDisease cds:Tonsillitis .
+
+cds:Diazepam
+    a               cds:Medication ;
+    cds:medicationName "Diazepam"^^xsd:string ;
+    cds:dosage      "5mg twice daily"^^xsd:string ;
+    cds:treatsDisease cds:AnxietyDisorder .
+
+
+########################################################################
+# Lab Results (10 total — one per patient)
+########################################################################
+
+cds:LabResult_001
+    a               cds:LabResult ;
+    cds:testName    "Blood Pressure"^^xsd:string ;
+    cds:testValue   "150.0"^^xsd:float .
+
+cds:LabResult_002
+    a               cds:LabResult ;
+    cds:testName    "WBC Count"^^xsd:string ;
+    cds:testValue   "15000.0"^^xsd:float .
+
+cds:LabResult_003
+    a               cds:LabResult ;
+    cds:testName    "Blood Sugar"^^xsd:string ;
+    cds:testValue   "250.0"^^xsd:float .
+
+cds:LabResult_004
+    a               cds:LabResult ;
+    cds:testName    "Cholesterol"^^xsd:string ;
+    cds:testValue   "280.0"^^xsd:float .
+
+cds:LabResult_005
+    a               cds:LabResult ;
+    cds:testName    "IgE Level"^^xsd:string ;
+    cds:testValue   "500.0"^^xsd:float .
+
+cds:LabResult_006
+    a               cds:LabResult ;
+    cds:testName    "ESR"^^xsd:string ;
+    cds:testValue   "45.0"^^xsd:float .
+
+cds:LabResult_007
+    a               cds:LabResult ;
+    cds:testName    "CT Scan"^^xsd:string ;
+    cds:testValue   "0.0"^^xsd:float .
+
+cds:LabResult_008
+    a               cds:LabResult ;
+    cds:testName    "WBC Count"^^xsd:string ;
+    cds:testValue   "18000.0"^^xsd:float .
+
+cds:LabResult_009
+    a               cds:LabResult ;
+    cds:testName    "Throat Culture"^^xsd:string ;
+    cds:testValue   "1.0"^^xsd:float .
+
+cds:LabResult_010
+    a               cds:LabResult ;
+    cds:testName    "Cortisol Level"^^xsd:string ;
+    cds:testValue   "25.0"^^xsd:float .
+
+
+########################################################################
+# Clinical Records (10 total — one per patient)
+########################################################################
+
+cds:ClinicalRecord_001
+    a               cds:ClinicalRecord ;
+    cds:recordDate  "2026-01-15"^^xsd:date .
+
+cds:ClinicalRecord_002
+    a               cds:ClinicalRecord ;
+    cds:recordDate  "2026-02-10"^^xsd:date .
+
+cds:ClinicalRecord_003
+    a               cds:ClinicalRecord ;
+    cds:recordDate  "2026-03-05"^^xsd:date .
+
+cds:ClinicalRecord_004
+    a               cds:ClinicalRecord ;
+    cds:recordDate  "2026-03-20"^^xsd:date .
+
+cds:ClinicalRecord_005
+    a               cds:ClinicalRecord ;
+    cds:recordDate  "2026-04-01"^^xsd:date .
+
+cds:ClinicalRecord_006
+    a               cds:ClinicalRecord ;
+    cds:recordDate  "2026-04-15"^^xsd:date .
+
+cds:ClinicalRecord_007
+    a               cds:ClinicalRecord ;
+    cds:recordDate  "2026-05-02"^^xsd:date .
+
+cds:ClinicalRecord_008
+    a               cds:ClinicalRecord ;
+    cds:recordDate  "2026-05-18"^^xsd:date .
+
+cds:ClinicalRecord_009
+    a               cds:ClinicalRecord ;
+    cds:recordDate  "2026-06-01"^^xsd:date .
+
+cds:ClinicalRecord_010
+    a               cds:ClinicalRecord ;
+    cds:recordDate  "2026-06-10"^^xsd:date .
+
+
+########################################################################
+# Doctors
+########################################################################
+
+cds:Dr_Smith
+    a               cds:Doctor ;
+    cds:treatsPatient cds:Patient_001 .
+
+cds:Dr_Jones
+    a               cds:Doctor ;
+    cds:treatsPatient cds:Patient_002 .
+
+cds:Dr_Wilson
+    a               cds:Doctor ;
+    cds:treatsPatient cds:Patient_004 .
+
+
+########################################################################
+# Patients (10 complete records)
+########################################################################
+
+# ------------------------------------------------------------------
+# Patient 1: Ahmed (age 55) — Hypertension — HighRisk
+# 3 symptoms → inferred: HighRiskPatient, ComplexCase, DiagnosedPatient
+# ------------------------------------------------------------------
+cds:Patient_001
+    a                       cds:Patient ;
+    cds:patientName         "Ahmed"^^xsd:string ;
+    cds:patientAge          55 ;
+    cds:patientID           "P001"^^xsd:string ;
+    cds:hasSymptom          cds:Headache ,
+                            cds:Dizziness ,
+                            cds:Hypertension_Symptom ;
+    cds:diagnosedWith       cds:Hypertension ;
+    cds:prescribedMedication cds:Amlodipine ;
+    cds:hasRiskLevel        cds:HighRisk_Instance ;
+    cds:hasLabResult        cds:LabResult_001 ;
+    cds:hasClinicalRecord   cds:ClinicalRecord_001 .
+
+# ------------------------------------------------------------------
+# Patient 2: Sara (age 40) — Pneumonia — HighRisk
+# 3 symptoms → inferred: HighRiskPatient, ComplexCase, DiagnosedPatient
+# ------------------------------------------------------------------
+cds:Patient_002
+    a                       cds:Patient ;
+    cds:patientName         "Sara"^^xsd:string ;
+    cds:patientAge          40 ;
+    cds:patientID           "P002"^^xsd:string ;
+    cds:hasSymptom          cds:Fever ,
+                            cds:Cough ,
+                            cds:ShortnessOfBreath ;
+    cds:diagnosedWith       cds:Pneumonia ;
+    cds:prescribedMedication cds:Amoxicillin ;
+    cds:hasRiskLevel        cds:HighRisk_Instance ;
+    cds:hasLabResult        cds:LabResult_002 ;
+    cds:hasClinicalRecord   cds:ClinicalRecord_002 .
+
+# ------------------------------------------------------------------
+# Patient 3: John (age 62) — Type 2 Diabetes — MediumRisk
+# 3 symptoms → inferred: HighRiskPatient, ComplexCase, DiagnosedPatient
+# ------------------------------------------------------------------
+cds:Patient_003
+    a                       cds:Patient ;
+    cds:patientName         "John"^^xsd:string ;
+    cds:patientAge          62 ;
+    cds:patientID           "P003"^^xsd:string ;
+    cds:hasSymptom          cds:Fatigue ,
+                            cds:FrequentUrination ,
+                            cds:BlurredVision ;
+    cds:diagnosedWith       cds:Type2Diabetes ;
+    cds:prescribedMedication cds:Metformin ;
+    cds:hasRiskLevel        cds:MediumRisk_Instance ;
+    cds:hasLabResult        cds:LabResult_003 ;
+    cds:hasClinicalRecord   cds:ClinicalRecord_003 .
+
+# ------------------------------------------------------------------
+# Patient 4: Maria (age 70) — Coronary Artery Disease — HighRisk
+# 2 symptoms → inferred: ComplexCase, DiagnosedPatient
+# ------------------------------------------------------------------
+cds:Patient_004
+    a                       cds:Patient ;
+    cds:patientName         "Maria"^^xsd:string ;
+    cds:patientAge          70 ;
+    cds:patientID           "P004"^^xsd:string ;
+    cds:hasSymptom          cds:ChestPain ,
+                            cds:ShortnessOfBreath ;
+    cds:diagnosedWith       cds:CoronaryArteryDisease ;
+    cds:prescribedMedication cds:Aspirin ;
+    cds:hasRiskLevel        cds:HighRisk_Instance ;
+    cds:hasLabResult        cds:LabResult_004 ;
+    cds:hasClinicalRecord   cds:ClinicalRecord_004 .
+
+# ------------------------------------------------------------------
+# Patient 5: Ali (age 28) — Allergic Reaction — LowRisk
+# 2 symptoms → inferred: ComplexCase, DiagnosedPatient
+# ------------------------------------------------------------------
+cds:Patient_005
+    a                       cds:Patient ;
+    cds:patientName         "Ali"^^xsd:string ;
+    cds:patientAge          28 ;
+    cds:patientID           "P005"^^xsd:string ;
+    cds:hasSymptom          cds:Rash ,
+                            cds:Itching ;
+    cds:diagnosedWith       cds:AllergicReaction ;
+    cds:prescribedMedication cds:Antihistamine ;
+    cds:hasRiskLevel        cds:LowRisk_Instance ;
+    cds:hasLabResult        cds:LabResult_005 ;
+    cds:hasClinicalRecord   cds:ClinicalRecord_005 .
+
+# ------------------------------------------------------------------
+# Patient 6: Fatima (age 45) — Rheumatoid Arthritis — MediumRisk
+# 2 symptoms → inferred: ComplexCase, DiagnosedPatient
+# ------------------------------------------------------------------
+cds:Patient_006
+    a                       cds:Patient ;
+    cds:patientName         "Fatima"^^xsd:string ;
+    cds:patientAge          45 ;
+    cds:patientID           "P006"^^xsd:string ;
+    cds:hasSymptom          cds:JointPain ,
+                            cds:Swelling ;
+    cds:diagnosedWith       cds:RheumatoidArthritis ;
+    cds:prescribedMedication cds:Ibuprofen ;
+    cds:hasRiskLevel        cds:MediumRisk_Instance ;
+    cds:hasLabResult        cds:LabResult_006 ;
+    cds:hasClinicalRecord   cds:ClinicalRecord_006 .
+
+# ------------------------------------------------------------------
+# Patient 7: David (age 35) — Migraine — LowRisk
+# 2 symptoms → inferred: ComplexCase, DiagnosedPatient
+# ------------------------------------------------------------------
+cds:Patient_007
+    a                       cds:Patient ;
+    cds:patientName         "David"^^xsd:string ;
+    cds:patientAge          35 ;
+    cds:patientID           "P007"^^xsd:string ;
+    cds:hasSymptom          cds:Headache ,
+                            cds:Nausea ;
+    cds:diagnosedWith       cds:Migraine ;
+    cds:prescribedMedication cds:Sumatriptan ;
+    cds:hasRiskLevel        cds:LowRisk_Instance ;
+    cds:hasLabResult        cds:LabResult_007 ;
+    cds:hasClinicalRecord   cds:ClinicalRecord_007 .
+
+# ------------------------------------------------------------------
+# Patient 8: Lina (age 22) — Appendicitis — HighRisk
+# 3 symptoms → inferred: HighRiskPatient, ComplexCase, DiagnosedPatient
+# ------------------------------------------------------------------
+cds:Patient_008
+    a                       cds:Patient ;
+    cds:patientName         "Lina"^^xsd:string ;
+    cds:patientAge          22 ;
+    cds:patientID           "P008"^^xsd:string ;
+    cds:hasSymptom          cds:AbdominalPain ,
+                            cds:Nausea ,
+                            cds:Vomiting ;
+    cds:diagnosedWith       cds:Appendicitis ;
+    cds:prescribedMedication cds:SurgicalTreatment ;
+    cds:hasRiskLevel        cds:HighRisk_Instance ;
+    cds:hasLabResult        cds:LabResult_008 ;
+    cds:hasClinicalRecord   cds:ClinicalRecord_008 .
+
+# ------------------------------------------------------------------
+# Patient 9: Omar (age 19) — Tonsillitis — LowRisk
+# 2 symptoms → inferred: ComplexCase, DiagnosedPatient
+# ------------------------------------------------------------------
+cds:Patient_009
+    a                       cds:Patient ;
+    cds:patientName         "Omar"^^xsd:string ;
+    cds:patientAge          19 ;
+    cds:patientID           "P009"^^xsd:string ;
+    cds:hasSymptom          cds:SoreThroat ,
+                            cds:Fever ;
+    cds:diagnosedWith       cds:Tonsillitis ;
+    cds:prescribedMedication cds:Penicillin ;
+    cds:hasRiskLevel        cds:LowRisk_Instance ;
+    cds:hasLabResult        cds:LabResult_009 ;
+    cds:hasClinicalRecord   cds:ClinicalRecord_009 .
+
+# ------------------------------------------------------------------
+# Patient 10: Nora (age 50) — Anxiety Disorder — MediumRisk
+# 2 symptoms → inferred: ComplexCase, DiagnosedPatient
+# ------------------------------------------------------------------
+cds:Patient_010
+    a                       cds:Patient ;
+    cds:patientName         "Nora"^^xsd:string ;
+    cds:patientAge          50 ;
+    cds:patientID           "P010"^^xsd:string ;
+    cds:hasSymptom          cds:Anxiety ,
+                            cds:Insomnia ;
+    cds:diagnosedWith       cds:AnxietyDisorder ;
+    cds:prescribedMedication cds:Diazepam ;
+    cds:hasRiskLevel        cds:MediumRisk_Instance ;
+    cds:hasLabResult        cds:LabResult_010 ;
+    cds:hasClinicalRecord   cds:ClinicalRecord_010 .
+
+
+########################################################################
+# Symptom → Disease (indicatesDisease) Relations
+########################################################################
+
+cds:Headache            cds:indicatesDisease cds:Hypertension , cds:Migraine .
+cds:Dizziness           cds:indicatesDisease cds:Hypertension .
+cds:Hypertension_Symptom cds:indicatesDisease cds:Hypertension .
+cds:Fever               cds:indicatesDisease cds:Pneumonia , cds:Tonsillitis .
+cds:Cough               cds:indicatesDisease cds:Pneumonia .
+cds:ShortnessOfBreath   cds:indicatesDisease cds:Pneumonia , cds:CoronaryArteryDisease .
+cds:Fatigue             cds:indicatesDisease cds:Type2Diabetes .
+cds:FrequentUrination   cds:indicatesDisease cds:Type2Diabetes .
+cds:BlurredVision       cds:indicatesDisease cds:Type2Diabetes .
+cds:ChestPain           cds:indicatesDisease cds:CoronaryArteryDisease .
+cds:Rash                cds:indicatesDisease cds:AllergicReaction .
+cds:Itching             cds:indicatesDisease cds:AllergicReaction .
+cds:JointPain           cds:indicatesDisease cds:RheumatoidArthritis .
+cds:Swelling            cds:indicatesDisease cds:RheumatoidArthritis .
+cds:Nausea              cds:indicatesDisease cds:Migraine , cds:Appendicitis .
+cds:AbdominalPain       cds:indicatesDisease cds:Appendicitis .
+cds:Vomiting            cds:indicatesDisease cds:Appendicitis .
+cds:SoreThroat          cds:indicatesDisease cds:Tonsillitis .
+cds:Anxiety             cds:indicatesDisease cds:AnxietyDisorder .
+cds:Insomnia            cds:indicatesDisease cds:AnxietyDisorder .
+
+
+########################################################################
+# Disease → Disease (isRelatedConditionOf) — Transitive chain
+# Reasoner infers: Hypertension isRelatedConditionOf HeartFailure
+########################################################################
+
+cds:Hypertension          cds:isRelatedConditionOf cds:CoronaryArteryDisease .
+cds:CoronaryArteryDisease cds:isRelatedConditionOf cds:HeartFailure .

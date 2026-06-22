@@ -1,0 +1,994 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rdf:RDF [
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+    <!ENTITY cds "http://www.semanticweb.org/clinical-decision-system#" >
+]>
+
+<rdf:RDF xmlns="http://www.semanticweb.org/clinical-decision-system#"
+     xml:base="http://www.semanticweb.org/clinical-decision-system"
+     xmlns:cds="http://www.semanticweb.org/clinical-decision-system#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+
+    <!-- =============================================================== -->
+    <!-- Ontology Declaration                                            -->
+    <!-- =============================================================== -->
+    <owl:Ontology rdf:about="http://www.semanticweb.org/clinical-decision-system">
+        <rdfs:label xml:lang="en">Smart Clinical Decision System Ontology</rdfs:label>
+        <rdfs:comment xml:lang="en">
+            A comprehensive OWL ontology for clinical decision support.
+            Covers patients, symptoms, diseases, medications, treatments,
+            doctors, lab results, clinical records, allergies, and risk levels.
+            Includes inference rules for automated reasoning with HermiT/Pellet.
+        </rdfs:comment>
+        <owl:versionInfo>1.0.0</owl:versionInfo>
+    </owl:Ontology>
+
+    <!-- =============================================================== -->
+    <!-- Object Properties                                               -->
+    <!-- =============================================================== -->
+
+    <!-- hasSymptom: Patient -> Symptom -->
+    <owl:ObjectProperty rdf:about="&cds;hasSymptom">
+        <rdfs:label xml:lang="en">has symptom</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a patient to symptoms they are exhibiting.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&cds;Symptom"/>
+    </owl:ObjectProperty>
+
+    <!-- diagnosedWith: Patient -> Disease -->
+    <owl:ObjectProperty rdf:about="&cds;diagnosedWith">
+        <rdfs:label xml:lang="en">diagnosed with</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a patient to a disease they have been diagnosed with.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&cds;Disease"/>
+    </owl:ObjectProperty>
+
+    <!-- prescribedMedication: Patient -> Medication -->
+    <!--
+        INFERENCE RULE 10: InverseProperties
+        prescribedMedication is the inverse of prescribedTo.
+        If Patient_001 prescribedMedication Amlodipine, then the reasoner
+        infers Amlodipine prescribedTo Patient_001 automatically.
+    -->
+    <owl:ObjectProperty rdf:about="&cds;prescribedMedication">
+        <rdfs:label xml:lang="en">prescribed medication</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a patient to a medication they have been prescribed.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&cds;Medication"/>
+        <owl:inverseOf rdf:resource="&cds;prescribedTo"/>
+    </owl:ObjectProperty>
+
+    <!-- prescribedTo: Medication -> Patient (INVERSE of prescribedMedication) -->
+    <owl:ObjectProperty rdf:about="&cds;prescribedTo">
+        <rdfs:label xml:lang="en">prescribed to</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a medication to the patient it is prescribed to. Inverse of prescribedMedication.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Medication"/>
+        <rdfs:range rdf:resource="&cds;Patient"/>
+    </owl:ObjectProperty>
+
+    <!-- receivedTreatment: Patient -> Treatment -->
+    <owl:ObjectProperty rdf:about="&cds;receivedTreatment">
+        <rdfs:label xml:lang="en">received treatment</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a patient to a treatment they have received.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&cds;Treatment"/>
+    </owl:ObjectProperty>
+
+    <!-- treatedBy: Patient -> Doctor -->
+    <owl:ObjectProperty rdf:about="&cds;treatedBy">
+        <rdfs:label xml:lang="en">treated by</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a patient to the doctor treating them.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&cds;Doctor"/>
+    </owl:ObjectProperty>
+
+    <!-- hasClinicalRecord: Patient -> ClinicalRecord -->
+    <owl:ObjectProperty rdf:about="&cds;hasClinicalRecord">
+        <rdfs:label xml:lang="en">has clinical record</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a patient to their clinical record.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&cds;ClinicalRecord"/>
+    </owl:ObjectProperty>
+
+    <!-- hasAllergy: Patient -> Allergy -->
+    <owl:ObjectProperty rdf:about="&cds;hasAllergy">
+        <rdfs:label xml:lang="en">has allergy</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a patient to an allergy they have.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&cds;Allergy"/>
+    </owl:ObjectProperty>
+
+    <!-- hasLabResult: Patient -> LabResult -->
+    <owl:ObjectProperty rdf:about="&cds;hasLabResult">
+        <rdfs:label xml:lang="en">has lab result</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a patient to their laboratory test result.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&cds;LabResult"/>
+    </owl:ObjectProperty>
+
+    <!-- indicatesDisease: Symptom -> Disease -->
+    <owl:ObjectProperty rdf:about="&cds;indicatesDisease">
+        <rdfs:label xml:lang="en">indicates disease</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a symptom to a disease it may indicate.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Symptom"/>
+        <rdfs:range rdf:resource="&cds;Disease"/>
+    </owl:ObjectProperty>
+
+    <!-- contraindicatedWith: Medication -> Medication -->
+    <owl:ObjectProperty rdf:about="&cds;contraindicatedWith">
+        <rdfs:label xml:lang="en">contraindicated with</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a medication to another medication it is contraindicated with.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Medication"/>
+        <rdfs:range rdf:resource="&cds;Medication"/>
+    </owl:ObjectProperty>
+
+    <!-- treatsDisease: Medication -> Disease -->
+    <owl:ObjectProperty rdf:about="&cds;treatsDisease">
+        <rdfs:label xml:lang="en">treats disease</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a medication to the disease it treats.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Medication"/>
+        <rdfs:range rdf:resource="&cds;Disease"/>
+    </owl:ObjectProperty>
+
+    <!-- hasRiskLevel: Patient -> RiskLevel -->
+    <owl:ObjectProperty rdf:about="&cds;hasRiskLevel">
+        <rdfs:label xml:lang="en">has risk level</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a patient to their assessed risk level.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&cds;RiskLevel"/>
+    </owl:ObjectProperty>
+
+    <!--
+        INFERENCE RULE 8: TransitiveProperty
+        isRelatedConditionOf is declared transitive.
+        If Hypertension isRelatedConditionOf CoronaryArteryDisease and
+        CoronaryArteryDisease isRelatedConditionOf HeartFailure, then the
+        reasoner infers Hypertension isRelatedConditionOf HeartFailure.
+    -->
+    <owl:ObjectProperty rdf:about="&cds;isRelatedConditionOf">
+        <rdf:type rdf:resource="&owl;TransitiveProperty"/>
+        <rdfs:label xml:lang="en">is related condition of</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a disease to a related disease. Transitive: if A isRelatedConditionOf B and B isRelatedConditionOf C, then A isRelatedConditionOf C is inferred.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Disease"/>
+        <rdfs:range rdf:resource="&cds;Disease"/>
+    </owl:ObjectProperty>
+
+    <!--
+        INFERENCE RULE 9: SymmetricProperty
+        interactsWith is declared symmetric.
+        If Metformin interactsWith Diazepam, the reasoner automatically
+        infers Diazepam interactsWith Metformin.
+    -->
+    <owl:ObjectProperty rdf:about="&cds;interactsWith">
+        <rdf:type rdf:resource="&owl;SymmetricProperty"/>
+        <rdfs:label xml:lang="en">interacts with</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a medication to another medication it interacts with. Symmetric: if A interactsWith B, then B interactsWith A is inferred.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Medication"/>
+        <rdfs:range rdf:resource="&cds;Medication"/>
+    </owl:ObjectProperty>
+
+    <!--
+        INFERENCE RULE 6: Property Chain
+        treatsPatient o diagnosedWith -> isSpecialistFor
+        If a Doctor treatsPatient a Patient, and that Patient diagnosedWith a Disease,
+        then the reasoner infers the Doctor isSpecialistFor that Disease.
+    -->
+    <owl:ObjectProperty rdf:about="&cds;isSpecialistFor">
+        <rdfs:label xml:lang="en">is specialist for</rdfs:label>
+        <rdfs:comment xml:lang="en">Inferred via property chain: if Doctor treatsPatient Patient and Patient diagnosedWith Disease, then Doctor isSpecialistFor Disease.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Doctor"/>
+        <rdfs:range rdf:resource="&cds;Disease"/>
+        <owl:propertyChainAxiom rdf:parseType="Collection">
+            <rdf:Description rdf:about="&cds;treatsPatient"/>
+            <rdf:Description rdf:about="&cds;diagnosedWith"/>
+        </owl:propertyChainAxiom>
+    </owl:ObjectProperty>
+
+    <!-- treatsPatient: Doctor -> Patient (needed for property chain) -->
+    <owl:ObjectProperty rdf:about="&cds;treatsPatient">
+        <rdfs:label xml:lang="en">treats patient</rdfs:label>
+        <rdfs:comment xml:lang="en">Links a doctor to a patient they treat. Used in property chain for isSpecialistFor inference.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Doctor"/>
+        <rdfs:range rdf:resource="&cds;Patient"/>
+    </owl:ObjectProperty>
+
+    <!-- =============================================================== -->
+    <!-- Datatype Properties                                             -->
+    <!-- =============================================================== -->
+
+    <!-- patientAge: Patient -> xsd:integer -->
+    <owl:DatatypeProperty rdf:about="&cds;patientAge">
+        <rdfs:label xml:lang="en">patient age</rdfs:label>
+        <rdfs:comment xml:lang="en">The age of the patient in years.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&xsd;integer"/>
+    </owl:DatatypeProperty>
+
+    <!-- patientName: Patient -> xsd:string -->
+    <owl:DatatypeProperty rdf:about="&cds;patientName">
+        <rdfs:label xml:lang="en">patient name</rdfs:label>
+        <rdfs:comment xml:lang="en">The full name of the patient.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&xsd;string"/>
+    </owl:DatatypeProperty>
+
+    <!-- patientID: Patient -> xsd:string -->
+    <owl:DatatypeProperty rdf:about="&cds;patientID">
+        <rdfs:label xml:lang="en">patient ID</rdfs:label>
+        <rdfs:comment xml:lang="en">A unique identifier for the patient.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Patient"/>
+        <rdfs:range rdf:resource="&xsd;string"/>
+    </owl:DatatypeProperty>
+
+    <!-- symptomName: Symptom -> xsd:string -->
+    <owl:DatatypeProperty rdf:about="&cds;symptomName">
+        <rdfs:label xml:lang="en">symptom name</rdfs:label>
+        <rdfs:comment xml:lang="en">The name of the symptom.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Symptom"/>
+        <rdfs:range rdf:resource="&xsd;string"/>
+    </owl:DatatypeProperty>
+
+    <!-- diseaseName: Disease -> xsd:string -->
+    <owl:DatatypeProperty rdf:about="&cds;diseaseName">
+        <rdfs:label xml:lang="en">disease name</rdfs:label>
+        <rdfs:comment xml:lang="en">The name of the disease.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Disease"/>
+        <rdfs:range rdf:resource="&xsd;string"/>
+    </owl:DatatypeProperty>
+
+    <!-- medicationName: Medication -> xsd:string -->
+    <owl:DatatypeProperty rdf:about="&cds;medicationName">
+        <rdfs:label xml:lang="en">medication name</rdfs:label>
+        <rdfs:comment xml:lang="en">The name of the medication.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Medication"/>
+        <rdfs:range rdf:resource="&xsd;string"/>
+    </owl:DatatypeProperty>
+
+    <!-- dosage: Medication -> xsd:string -->
+    <owl:DatatypeProperty rdf:about="&cds;dosage">
+        <rdfs:label xml:lang="en">dosage</rdfs:label>
+        <rdfs:comment xml:lang="en">The dosage of the medication (e.g., "500mg daily").</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;Medication"/>
+        <rdfs:range rdf:resource="&xsd;string"/>
+    </owl:DatatypeProperty>
+
+    <!-- testName: LabResult -> xsd:string -->
+    <owl:DatatypeProperty rdf:about="&cds;testName">
+        <rdfs:label xml:lang="en">test name</rdfs:label>
+        <rdfs:comment xml:lang="en">The name of the laboratory test.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;LabResult"/>
+        <rdfs:range rdf:resource="&xsd;string"/>
+    </owl:DatatypeProperty>
+
+    <!-- testValue: LabResult -> xsd:float -->
+    <owl:DatatypeProperty rdf:about="&cds;testValue">
+        <rdfs:label xml:lang="en">test value</rdfs:label>
+        <rdfs:comment xml:lang="en">The numeric value of the laboratory test result.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;LabResult"/>
+        <rdfs:range rdf:resource="&xsd;float"/>
+    </owl:DatatypeProperty>
+
+    <!-- recordDate: ClinicalRecord -> xsd:date -->
+    <owl:DatatypeProperty rdf:about="&cds;recordDate">
+        <rdfs:label xml:lang="en">record date</rdfs:label>
+        <rdfs:comment xml:lang="en">The date when the clinical record was created.</rdfs:comment>
+        <rdfs:domain rdf:resource="&cds;ClinicalRecord"/>
+        <rdfs:range rdf:resource="&xsd;date"/>
+    </owl:DatatypeProperty>
+
+    <!-- =============================================================== -->
+    <!-- Classes                                                         -->
+    <!-- =============================================================== -->
+
+    <!-- Patient -->
+    <owl:Class rdf:about="&cds;Patient">
+        <rdfs:label xml:lang="en">Patient</rdfs:label>
+        <rdfs:comment xml:lang="en">A person receiving medical care.</rdfs:comment>
+    </owl:Class>
+
+    <!-- Symptom -->
+    <owl:Class rdf:about="&cds;Symptom">
+        <rdfs:label xml:lang="en">Symptom</rdfs:label>
+        <rdfs:comment xml:lang="en">A physical or mental sign of a disease experienced by a patient.</rdfs:comment>
+    </owl:Class>
+
+    <!-- Disease -->
+    <owl:Class rdf:about="&cds;Disease">
+        <rdfs:label xml:lang="en">Disease</rdfs:label>
+        <rdfs:comment xml:lang="en">A disorder of structure or function that produces specific signs or symptoms.</rdfs:comment>
+    </owl:Class>
+
+    <!-- Medication -->
+    <owl:Class rdf:about="&cds;Medication">
+        <rdfs:label xml:lang="en">Medication</rdfs:label>
+        <rdfs:comment xml:lang="en">A substance used to treat or prevent a disease.</rdfs:comment>
+    </owl:Class>
+
+    <!-- Treatment -->
+    <owl:Class rdf:about="&cds;Treatment">
+        <rdfs:label xml:lang="en">Treatment</rdfs:label>
+        <rdfs:comment xml:lang="en">A medical procedure or intervention applied to a patient.</rdfs:comment>
+    </owl:Class>
+
+    <!-- CriticalTreatment: subclass of Treatment, needed for allValuesFrom restriction -->
+    <owl:Class rdf:about="&cds;CriticalTreatment">
+        <rdfs:label xml:lang="en">Critical Treatment</rdfs:label>
+        <rdfs:comment xml:lang="en">A treatment classified as critical, typically for life-threatening conditions. Subclass of Treatment.</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="&cds;Treatment"/>
+    </owl:Class>
+
+    <!-- Doctor -->
+    <owl:Class rdf:about="&cds;Doctor">
+        <rdfs:label xml:lang="en">Doctor</rdfs:label>
+        <rdfs:comment xml:lang="en">A medical professional who treats patients.</rdfs:comment>
+    </owl:Class>
+
+    <!-- ClinicalRecord -->
+    <owl:Class rdf:about="&cds;ClinicalRecord">
+        <rdfs:label xml:lang="en">Clinical Record</rdfs:label>
+        <rdfs:comment xml:lang="en">A record documenting a patient's clinical encounter.</rdfs:comment>
+    </owl:Class>
+
+    <!-- Allergy -->
+    <owl:Class rdf:about="&cds;Allergy">
+        <rdfs:label xml:lang="en">Allergy</rdfs:label>
+        <rdfs:comment xml:lang="en">An immune system response to a substance that is normally harmless.</rdfs:comment>
+    </owl:Class>
+
+    <!-- LabResult -->
+    <owl:Class rdf:about="&cds;LabResult">
+        <rdfs:label xml:lang="en">Lab Result</rdfs:label>
+        <rdfs:comment xml:lang="en">A result from a laboratory test performed on a patient.</rdfs:comment>
+    </owl:Class>
+
+    <!-- RiskLevel -->
+    <owl:Class rdf:about="&cds;RiskLevel">
+        <rdfs:label xml:lang="en">Risk Level</rdfs:label>
+        <rdfs:comment xml:lang="en">A classification of patient risk severity.</rdfs:comment>
+    </owl:Class>
+
+    <!--
+        INFERENCE RULE 1: SubClassOf Axioms
+        LowRisk, MediumRisk, and HighRisk are all subclasses of RiskLevel.
+        Any individual typed as LowRisk, MediumRisk, or HighRisk will be
+        automatically inferred to also be a RiskLevel by the reasoner.
+    -->
+    <owl:Class rdf:about="&cds;LowRisk">
+        <rdfs:label xml:lang="en">Low Risk</rdfs:label>
+        <rdfs:comment xml:lang="en">Low risk level classification for a patient.</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="&cds;RiskLevel"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="&cds;MediumRisk">
+        <rdfs:label xml:lang="en">Medium Risk</rdfs:label>
+        <rdfs:comment xml:lang="en">Medium risk level classification for a patient.</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="&cds;RiskLevel"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="&cds;HighRisk">
+        <rdfs:label xml:lang="en">High Risk</rdfs:label>
+        <rdfs:comment xml:lang="en">High risk level classification for a patient.</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="&cds;RiskLevel"/>
+    </owl:Class>
+
+    <!--
+        INFERENCE RULE 7 (part 1): Disjoint Classes — Disease and Medication
+        Disease and Medication are declared disjoint. No individual can be
+        both a Disease and a Medication simultaneously. This prevents
+        modelling errors and enables consistency checking by the reasoner.
+    -->
+    <rdf:Description>
+        <rdf:type rdf:resource="&owl;AllDisjointClasses"/>
+        <owl:members rdf:parseType="Collection">
+            <rdf:Description rdf:about="&cds;Disease"/>
+            <rdf:Description rdf:about="&cds;Medication"/>
+        </owl:members>
+    </rdf:Description>
+
+    <!--
+        INFERENCE RULE 7 (part 2): Disjoint Classes — LowRisk, MediumRisk, HighRisk
+        All three risk level subclasses are pairwise disjoint.
+        No individual can belong to more than one risk level.
+        If a reasoner detects an individual typed as both LowRisk and HighRisk,
+        it will flag an inconsistency.
+    -->
+    <rdf:Description>
+        <rdf:type rdf:resource="&owl;AllDisjointClasses"/>
+        <owl:members rdf:parseType="Collection">
+            <rdf:Description rdf:about="&cds;LowRisk"/>
+            <rdf:Description rdf:about="&cds;MediumRisk"/>
+            <rdf:Description rdf:about="&cds;HighRisk"/>
+        </owl:members>
+    </rdf:Description>
+
+    <!--
+        INFERENCE RULE 2: EquivalentClass with minCardinality and someValuesFrom
+        HighRiskPatient ≡ Patient ⊓ (hasSymptom min 3) ⊓ (diagnosedWith some Disease)
+
+        A patient who has at least 3 symptoms AND is diagnosed with some disease
+        will be automatically classified as a HighRiskPatient by the reasoner.
+        For example, Patient_001 (Ahmed) with 3 symptoms and a diagnosis of
+        Hypertension will be inferred as a HighRiskPatient.
+    -->
+    <owl:Class rdf:about="&cds;HighRiskPatient">
+        <rdfs:label xml:lang="en">High Risk Patient</rdfs:label>
+        <rdfs:comment xml:lang="en">Inferred class: a Patient with at least 3 symptoms and at least one diagnosed disease.</rdfs:comment>
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="&cds;Patient"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="&cds;hasSymptom"/>
+                        <owl:minCardinality rdf:datatype="&xsd;nonNegativeInteger">3</owl:minCardinality>
+                    </owl:Restriction>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="&cds;diagnosedWith"/>
+                        <owl:someValuesFrom rdf:resource="&cds;Disease"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+
+    <!--
+        INFERENCE RULE 3: OWL Restriction (someValuesFrom)
+        DiagnosedPatient ≡ Patient ⊓ (hasSymptom some Symptom)
+
+        Any Patient who has at least one Symptom is inferred to be a DiagnosedPatient.
+        This uses owl:someValuesFrom to check existential quantification:
+        "there exists at least one value of hasSymptom that is a Symptom."
+    -->
+    <owl:Class rdf:about="&cds;DiagnosedPatient">
+        <rdfs:label xml:lang="en">Diagnosed Patient</rdfs:label>
+        <rdfs:comment xml:lang="en">Inferred class: a Patient who has at least one Symptom (existential restriction).</rdfs:comment>
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="&cds;Patient"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="&cds;hasSymptom"/>
+                        <owl:someValuesFrom rdf:resource="&cds;Symptom"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+
+    <!--
+        INFERENCE RULE 4: OWL Restriction (allValuesFrom)
+        CriticalPatient ⊑ (receivedTreatment only CriticalTreatment)
+
+        Every CriticalPatient must have ALL of their treatments be CriticalTreatments.
+        This is a universal restriction (allValuesFrom): if a CriticalPatient has any
+        receivedTreatment, it MUST be a CriticalTreatment. The reasoner will check
+        this constraint during consistency checking.
+    -->
+    <owl:Class rdf:about="&cds;CriticalPatient">
+        <rdfs:label xml:lang="en">Critical Patient</rdfs:label>
+        <rdfs:comment xml:lang="en">A patient whose treatments must all be CriticalTreatments (universal restriction).</rdfs:comment>
+        <rdfs:subClassOf rdf:resource="&cds;Patient"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="&cds;receivedTreatment"/>
+                <owl:allValuesFrom rdf:resource="&cds;CriticalTreatment"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+
+    <!--
+        INFERENCE RULE 5: OWL Restriction (minCardinality)
+        ComplexCase ≡ Patient ⊓ (hasSymptom min 2)
+
+        A Patient with at least 2 symptoms is automatically classified as a ComplexCase.
+        This uses owl:minCardinality to enforce the minimum number of symptom relations.
+        For example, Patient_004 (Maria) with ChestPain and ShortnessOfBreath
+        will be inferred as a ComplexCase by the reasoner.
+    -->
+    <owl:Class rdf:about="&cds;ComplexCase">
+        <rdfs:label xml:lang="en">Complex Case</rdfs:label>
+        <rdfs:comment xml:lang="en">Inferred class: a Patient with at least 2 symptoms (minCardinality restriction).</rdfs:comment>
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="&cds;Patient"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="&cds;hasSymptom"/>
+                        <owl:minCardinality rdf:datatype="&xsd;nonNegativeInteger">2</owl:minCardinality>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </owl:equivalentClass>
+    </owl:Class>
+
+    <!-- =============================================================== -->
+    <!-- Individuals: Symptoms (20 total)                                -->
+    <!-- =============================================================== -->
+
+    <owl:NamedIndividual rdf:about="&cds;Headache">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Headache</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Dizziness">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Dizziness</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Fever">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Fever</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Cough">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Cough</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;ShortnessOfBreath">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Shortness of Breath</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Fatigue">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Fatigue</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;FrequentUrination">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Frequent Urination</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;BlurredVision">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Blurred Vision</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;ChestPain">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Chest Pain</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Rash">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Rash</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Itching">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Itching</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;JointPain">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Joint Pain</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Swelling">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Swelling</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Nausea">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Nausea</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;AbdominalPain">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Abdominal Pain</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;SoreThroat">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Sore Throat</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Anxiety">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Anxiety</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Insomnia">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Insomnia</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Vomiting">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Vomiting</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Hypertension_Symptom">
+        <rdf:type rdf:resource="&cds;Symptom"/>
+        <cds:symptomName rdf:datatype="&xsd;string">Hypertension Symptom</cds:symptomName>
+    </owl:NamedIndividual>
+
+    <!-- =============================================================== -->
+    <!-- Individuals: Diseases (10 total + HeartFailure for transitivity) -->
+    <!-- =============================================================== -->
+
+    <owl:NamedIndividual rdf:about="&cds;Hypertension">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Hypertension</cds:diseaseName>
+        <!-- INFERENCE RULE 8 demo: Transitive chain starts here -->
+        <cds:isRelatedConditionOf rdf:resource="&cds;CoronaryArteryDisease"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Pneumonia">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Pneumonia</cds:diseaseName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Type2Diabetes">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Type 2 Diabetes</cds:diseaseName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;CoronaryArteryDisease">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Coronary Artery Disease</cds:diseaseName>
+        <!-- Transitive chain continues: CAD isRelatedConditionOf HeartFailure -->
+        <cds:isRelatedConditionOf rdf:resource="&cds;HeartFailure"/>
+    </owl:NamedIndividual>
+
+    <!-- HeartFailure: end of transitive chain
+         Reasoner infers: Hypertension isRelatedConditionOf HeartFailure (via transitivity) -->
+    <owl:NamedIndividual rdf:about="&cds;HeartFailure">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Heart Failure</cds:diseaseName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;AllergicReaction">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Allergic Reaction</cds:diseaseName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;RheumatoidArthritis">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Rheumatoid Arthritis</cds:diseaseName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Migraine">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Migraine</cds:diseaseName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Appendicitis">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Appendicitis</cds:diseaseName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Tonsillitis">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Tonsillitis</cds:diseaseName>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;AnxietyDisorder">
+        <rdf:type rdf:resource="&cds;Disease"/>
+        <cds:diseaseName rdf:datatype="&xsd;string">Anxiety Disorder</cds:diseaseName>
+    </owl:NamedIndividual>
+
+    <!-- =============================================================== -->
+    <!-- Individuals: Medications (9 total)                              -->
+    <!-- =============================================================== -->
+
+    <owl:NamedIndividual rdf:about="&cds;Amlodipine">
+        <rdf:type rdf:resource="&cds;Medication"/>
+        <cds:medicationName rdf:datatype="&xsd;string">Amlodipine</cds:medicationName>
+        <cds:dosage rdf:datatype="&xsd;string">5mg daily</cds:dosage>
+        <cds:treatsDisease rdf:resource="&cds;Hypertension"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Amoxicillin">
+        <rdf:type rdf:resource="&cds;Medication"/>
+        <cds:medicationName rdf:datatype="&xsd;string">Amoxicillin</cds:medicationName>
+        <cds:dosage rdf:datatype="&xsd;string">500mg three times daily</cds:dosage>
+        <cds:treatsDisease rdf:resource="&cds;Pneumonia"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Metformin">
+        <rdf:type rdf:resource="&cds;Medication"/>
+        <cds:medicationName rdf:datatype="&xsd;string">Metformin</cds:medicationName>
+        <cds:dosage rdf:datatype="&xsd;string">500mg twice daily</cds:dosage>
+        <cds:treatsDisease rdf:resource="&cds;Type2Diabetes"/>
+        <!--
+            INFERENCE RULE 9 demo: SymmetricProperty interactsWith
+            Metformin interactsWith Diazepam is stated here.
+            The reasoner infers Diazepam interactsWith Metformin automatically.
+        -->
+        <cds:interactsWith rdf:resource="&cds;Diazepam"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Aspirin">
+        <rdf:type rdf:resource="&cds;Medication"/>
+        <cds:medicationName rdf:datatype="&xsd;string">Aspirin</cds:medicationName>
+        <cds:dosage rdf:datatype="&xsd;string">81mg daily</cds:dosage>
+        <cds:treatsDisease rdf:resource="&cds;CoronaryArteryDisease"/>
+        <!-- Contraindication: Aspirin should not be taken with Ibuprofen -->
+        <cds:contraindicatedWith rdf:resource="&cds;Ibuprofen"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Antihistamine">
+        <rdf:type rdf:resource="&cds;Medication"/>
+        <cds:medicationName rdf:datatype="&xsd;string">Antihistamine</cds:medicationName>
+        <cds:dosage rdf:datatype="&xsd;string">10mg daily</cds:dosage>
+        <cds:treatsDisease rdf:resource="&cds;AllergicReaction"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Ibuprofen">
+        <rdf:type rdf:resource="&cds;Medication"/>
+        <cds:medicationName rdf:datatype="&xsd;string">Ibuprofen</cds:medicationName>
+        <cds:dosage rdf:datatype="&xsd;string">400mg three times daily</cds:dosage>
+        <cds:treatsDisease rdf:resource="&cds;RheumatoidArthritis"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Sumatriptan">
+        <rdf:type rdf:resource="&cds;Medication"/>
+        <cds:medicationName rdf:datatype="&xsd;string">Sumatriptan</cds:medicationName>
+        <cds:dosage rdf:datatype="&xsd;string">50mg as needed</cds:dosage>
+        <cds:treatsDisease rdf:resource="&cds;Migraine"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Penicillin">
+        <rdf:type rdf:resource="&cds;Medication"/>
+        <cds:medicationName rdf:datatype="&xsd;string">Penicillin</cds:medicationName>
+        <cds:dosage rdf:datatype="&xsd;string">250mg four times daily</cds:dosage>
+        <cds:treatsDisease rdf:resource="&cds;Tonsillitis"/>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;Diazepam">
+        <rdf:type rdf:resource="&cds;Medication"/>
+        <cds:medicationName rdf:datatype="&xsd;string">Diazepam</cds:medicationName>
+        <cds:dosage rdf:datatype="&xsd;string">5mg twice daily</cds:dosage>
+        <cds:treatsDisease rdf:resource="&cds;AnxietyDisorder"/>
+    </owl:NamedIndividual>
+
+    <!-- =============================================================== -->
+    <!-- Individuals: RiskLevel Instances                                -->
+    <!-- =============================================================== -->
+
+    <owl:NamedIndividual rdf:about="&cds;LowRisk_Instance">
+        <rdf:type rdf:resource="&cds;LowRisk"/>
+        <rdfs:label xml:lang="en">Low Risk</rdfs:label>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;MediumRisk_Instance">
+        <rdf:type rdf:resource="&cds;MediumRisk"/>
+        <rdfs:label xml:lang="en">Medium Risk</rdfs:label>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;HighRisk_Instance">
+        <rdf:type rdf:resource="&cds;HighRisk"/>
+        <rdfs:label xml:lang="en">High Risk</rdfs:label>
+    </owl:NamedIndividual>
+
+    <!-- =============================================================== -->
+    <!-- Individuals: Lab Results                                        -->
+    <!-- =============================================================== -->
+
+    <owl:NamedIndividual rdf:about="&cds;LabResult_001">
+        <rdf:type rdf:resource="&cds;LabResult"/>
+        <cds:testName rdf:datatype="&xsd;string">Blood Pressure</cds:testName>
+        <cds:testValue rdf:datatype="&xsd;float">150.0</cds:testValue>
+    </owl:NamedIndividual>
+
+    <owl:NamedIndividual rdf:about="&cds;LabResult_002">
+        <rdf:type rdf:resource="&cds;LabResult"/>
+        <cds:testName rdf:datatype="&xsd;string">Blood Sugar</cds:testName>
+        <cds:testValue rdf:datatype="&xsd;float">250.0</cds:testValue>
+    </owl:NamedIndividual>
+
+    <!-- =============================================================== -->
+    <!-- Individuals: Doctors                                            -->
+    <!-- =============================================================== -->
+
+    <!--
+        INFERENCE RULE 6 demo: Property Chain
+        Dr_Smith treatsPatient Patient_001 and Patient_001 diagnosedWith Hypertension.
+        The reasoner infers: Dr_Smith isSpecialistFor Hypertension.
+    -->
+    <owl:NamedIndividual rdf:about="&cds;Dr_Smith">
+        <rdf:type rdf:resource="&cds;Doctor"/>
+        <cds:treatsPatient rdf:resource="&cds;Patient_001"/>
+    </owl:NamedIndividual>
+
+    <!--
+        Dr_Jones treatsPatient Patient_002 and Patient_002 diagnosedWith Pneumonia.
+        The reasoner infers: Dr_Jones isSpecialistFor Pneumonia.
+    -->
+    <owl:NamedIndividual rdf:about="&cds;Dr_Jones">
+        <rdf:type rdf:resource="&cds;Doctor"/>
+        <cds:treatsPatient rdf:resource="&cds;Patient_002"/>
+    </owl:NamedIndividual>
+
+    <!-- =============================================================== -->
+    <!-- Individuals: Patients (5 in OWL file)                           -->
+    <!-- =============================================================== -->
+
+    <!--
+        Patient_001: Ahmed, age 55
+        Has 3 symptoms → will be inferred as HighRiskPatient (Rule 2),
+        ComplexCase (Rule 5), and DiagnosedPatient (Rule 3).
+        INFERENCE RULE 10 demo: prescribedMedication Amlodipine →
+        reasoner infers Amlodipine prescribedTo Patient_001 (inverse).
+    -->
+    <owl:NamedIndividual rdf:about="&cds;Patient_001">
+        <rdf:type rdf:resource="&cds;Patient"/>
+        <cds:patientName rdf:datatype="&xsd;string">Ahmed</cds:patientName>
+        <cds:patientAge rdf:datatype="&xsd;integer">55</cds:patientAge>
+        <cds:patientID rdf:datatype="&xsd;string">P001</cds:patientID>
+        <cds:hasSymptom rdf:resource="&cds;Headache"/>
+        <cds:hasSymptom rdf:resource="&cds;Dizziness"/>
+        <cds:hasSymptom rdf:resource="&cds;Hypertension_Symptom"/>
+        <cds:diagnosedWith rdf:resource="&cds;Hypertension"/>
+        <cds:prescribedMedication rdf:resource="&cds;Amlodipine"/>
+        <cds:hasRiskLevel rdf:resource="&cds;HighRisk_Instance"/>
+        <cds:hasLabResult rdf:resource="&cds;LabResult_001"/>
+    </owl:NamedIndividual>
+
+    <!--
+        Patient_002: Sara, age 40
+        Has 3 symptoms → inferred as HighRiskPatient, ComplexCase, DiagnosedPatient.
+    -->
+    <owl:NamedIndividual rdf:about="&cds;Patient_002">
+        <rdf:type rdf:resource="&cds;Patient"/>
+        <cds:patientName rdf:datatype="&xsd;string">Sara</cds:patientName>
+        <cds:patientAge rdf:datatype="&xsd;integer">40</cds:patientAge>
+        <cds:patientID rdf:datatype="&xsd;string">P002</cds:patientID>
+        <cds:hasSymptom rdf:resource="&cds;Fever"/>
+        <cds:hasSymptom rdf:resource="&cds;Cough"/>
+        <cds:hasSymptom rdf:resource="&cds;ShortnessOfBreath"/>
+        <cds:diagnosedWith rdf:resource="&cds;Pneumonia"/>
+        <cds:prescribedMedication rdf:resource="&cds;Amoxicillin"/>
+        <cds:hasRiskLevel rdf:resource="&cds;HighRisk_Instance"/>
+    </owl:NamedIndividual>
+
+    <!--
+        Patient_003: John, age 62
+        Has 3 symptoms → inferred as HighRiskPatient, ComplexCase, DiagnosedPatient.
+    -->
+    <owl:NamedIndividual rdf:about="&cds;Patient_003">
+        <rdf:type rdf:resource="&cds;Patient"/>
+        <cds:patientName rdf:datatype="&xsd;string">John</cds:patientName>
+        <cds:patientAge rdf:datatype="&xsd;integer">62</cds:patientAge>
+        <cds:patientID rdf:datatype="&xsd;string">P003</cds:patientID>
+        <cds:hasSymptom rdf:resource="&cds;Fatigue"/>
+        <cds:hasSymptom rdf:resource="&cds;FrequentUrination"/>
+        <cds:hasSymptom rdf:resource="&cds;BlurredVision"/>
+        <cds:diagnosedWith rdf:resource="&cds;Type2Diabetes"/>
+        <cds:prescribedMedication rdf:resource="&cds;Metformin"/>
+        <cds:hasRiskLevel rdf:resource="&cds;MediumRisk_Instance"/>
+    </owl:NamedIndividual>
+
+    <!--
+        Patient_004: Maria, age 70
+        Has 2 symptoms → inferred as ComplexCase (Rule 5) and DiagnosedPatient (Rule 3).
+        NOT HighRiskPatient (needs min 3 symptoms).
+    -->
+    <owl:NamedIndividual rdf:about="&cds;Patient_004">
+        <rdf:type rdf:resource="&cds;Patient"/>
+        <cds:patientName rdf:datatype="&xsd;string">Maria</cds:patientName>
+        <cds:patientAge rdf:datatype="&xsd;integer">70</cds:patientAge>
+        <cds:patientID rdf:datatype="&xsd;string">P004</cds:patientID>
+        <cds:hasSymptom rdf:resource="&cds;ChestPain"/>
+        <cds:hasSymptom rdf:resource="&cds;ShortnessOfBreath"/>
+        <cds:diagnosedWith rdf:resource="&cds;CoronaryArteryDisease"/>
+        <cds:prescribedMedication rdf:resource="&cds;Aspirin"/>
+        <cds:hasRiskLevel rdf:resource="&cds;HighRisk_Instance"/>
+    </owl:NamedIndividual>
+
+    <!--
+        Patient_005: Ali, age 28
+        Has 2 symptoms → inferred as ComplexCase and DiagnosedPatient.
+    -->
+    <owl:NamedIndividual rdf:about="&cds;Patient_005">
+        <rdf:type rdf:resource="&cds;Patient"/>
+        <cds:patientName rdf:datatype="&xsd;string">Ali</cds:patientName>
+        <cds:patientAge rdf:datatype="&xsd;integer">28</cds:patientAge>
+        <cds:patientID rdf:datatype="&xsd;string">P005</cds:patientID>
+        <cds:hasSymptom rdf:resource="&cds;Rash"/>
+        <cds:hasSymptom rdf:resource="&cds;Itching"/>
+        <cds:diagnosedWith rdf:resource="&cds;AllergicReaction"/>
+        <cds:prescribedMedication rdf:resource="&cds;Antihistamine"/>
+        <cds:hasRiskLevel rdf:resource="&cds;LowRisk_Instance"/>
+    </owl:NamedIndividual>
+
+    <!-- =============================================================== -->
+    <!-- Symptom-Disease indicatesDisease Relations                      -->
+    <!-- =============================================================== -->
+
+    <!-- These triples are added via additional rdf:Description to avoid
+         duplicating Symptom NamedIndividual declarations -->
+
+    <rdf:Description rdf:about="&cds;Headache">
+        <cds:indicatesDisease rdf:resource="&cds;Hypertension"/>
+        <cds:indicatesDisease rdf:resource="&cds;Migraine"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Dizziness">
+        <cds:indicatesDisease rdf:resource="&cds;Hypertension"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Hypertension_Symptom">
+        <cds:indicatesDisease rdf:resource="&cds;Hypertension"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Fever">
+        <cds:indicatesDisease rdf:resource="&cds;Pneumonia"/>
+        <cds:indicatesDisease rdf:resource="&cds;Tonsillitis"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Cough">
+        <cds:indicatesDisease rdf:resource="&cds;Pneumonia"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;ShortnessOfBreath">
+        <cds:indicatesDisease rdf:resource="&cds;Pneumonia"/>
+        <cds:indicatesDisease rdf:resource="&cds;CoronaryArteryDisease"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Fatigue">
+        <cds:indicatesDisease rdf:resource="&cds;Type2Diabetes"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;FrequentUrination">
+        <cds:indicatesDisease rdf:resource="&cds;Type2Diabetes"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;BlurredVision">
+        <cds:indicatesDisease rdf:resource="&cds;Type2Diabetes"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;ChestPain">
+        <cds:indicatesDisease rdf:resource="&cds;CoronaryArteryDisease"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Rash">
+        <cds:indicatesDisease rdf:resource="&cds;AllergicReaction"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Itching">
+        <cds:indicatesDisease rdf:resource="&cds;AllergicReaction"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;JointPain">
+        <cds:indicatesDisease rdf:resource="&cds;RheumatoidArthritis"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Swelling">
+        <cds:indicatesDisease rdf:resource="&cds;RheumatoidArthritis"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Nausea">
+        <cds:indicatesDisease rdf:resource="&cds;Migraine"/>
+        <cds:indicatesDisease rdf:resource="&cds;Appendicitis"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;AbdominalPain">
+        <cds:indicatesDisease rdf:resource="&cds;Appendicitis"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Vomiting">
+        <cds:indicatesDisease rdf:resource="&cds;Appendicitis"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;SoreThroat">
+        <cds:indicatesDisease rdf:resource="&cds;Tonsillitis"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Anxiety">
+        <cds:indicatesDisease rdf:resource="&cds;AnxietyDisorder"/>
+    </rdf:Description>
+
+    <rdf:Description rdf:about="&cds;Insomnia">
+        <cds:indicatesDisease rdf:resource="&cds;AnxietyDisorder"/>
+    </rdf:Description>
+
+</rdf:RDF>
