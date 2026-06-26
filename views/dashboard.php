@@ -279,7 +279,7 @@
 </div>
 
 <script>
-(async function() {
+document.addEventListener('DOMContentLoaded', async function() {
     let allPatients = [];
     let riskChartInstance = null;
 
@@ -317,10 +317,10 @@
             });
 
             // Use dashboard data if available
-            const totalVal = dashData?.totalPatients || total;
-            const highVal = dashData?.highRiskCount || highRisk;
-            const disVal = dashData?.diseasesTracked || diseases.size;
-            const medVal = dashData?.activeMedications || medications.size;
+            const totalVal = dashData?.data?.totalPatients ?? dashData?.totalPatients ?? total;
+            const highVal  = dashData?.data?.highRiskCount ?? dashData?.highRiskCount ?? highRisk;
+            const disVal   = dashData?.data?.diseaseCount ?? dashData?.diseasesTracked ?? diseases.size;
+            const medVal   = dashData?.data?.medicationCount ?? dashData?.activeMedications ?? medications.size;
 
             animateCounter(document.getElementById('totalPatients'), totalVal);
             animateCounter(document.getElementById('highRiskCount'), highVal);
@@ -336,7 +336,9 @@
                 else if (key === 'Critical') riskCounts['High']++;
                 else if (key === 'Moderate') riskCounts['Medium']++;
             });
-            renderRiskChart(riskCounts);
+            if (typeof Chart !== 'undefined') {
+                renderRiskChart(riskCounts);
+            }
 
             // Recent Records Table (last 5)
             renderRecentRecords(allPatients.slice(0, 5));
@@ -484,5 +486,5 @@
 
     // --- Init ---
     await loadDashboard();
-})();
+});
 </script>

@@ -416,7 +416,7 @@
 <div id="explanationSection" style="display:none;"></div>
 
 <script>
-(async function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const patientId = '<?= addslashes($patientId) ?>';
     let patientData = null;
 
@@ -656,5 +656,5 @@
 
     // --- Init ---
     await loadPatient();
-})();
+});
 </script>

@@ -327,7 +327,7 @@
 
             if (diseasesArr.length) {
                 container.innerHTML = diseasesArr.map((d, i) => {
-                    const name = typeof d === 'string' ? d : (d.name || d.disease || d.label || 'Unknown');
+                    const name = typeof d === 'string' ? d : (d.diseaseName || d.name || d.disease || d.label || 'Unknown');
                     const confidence = d.confidence || d.probability || d.score || d.matchPercentage || 0;
                     const confPercent = confidence > 1 ? confidence : Math.round(confidence * 100);
                     const confClass = confPercent >= 70 ? 'high' : (confPercent >= 40 ? 'medium' : 'low');

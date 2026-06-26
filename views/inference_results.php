@@ -320,7 +320,7 @@
 </div>
 
 <script>
-(async function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // --- Load patient selector ---
     async function loadPatients() {
         try {
@@ -467,5 +467,5 @@
 
     // --- Init ---
     await loadPatients();
-})();
+});
 </script>

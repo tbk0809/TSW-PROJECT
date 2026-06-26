@@ -136,7 +136,7 @@
 </div>
 
 <script>
-(async function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const PER_PAGE = 10;
     let allPatients = [];
     let filteredPatients = [];
@@ -187,11 +187,11 @@
         const avatarColors = ['patient-avatar-1','patient-avatar-2','patient-avatar-3','patient-avatar-4','patient-avatar-5'];
 
         tbody.innerHTML = pageData.map((p, i) => {
-            const id = p.id || p.patientId || p.patient_id || '';
+            const id = p.patientID || p.id || p.patientId || p.patient_id || '';
             const name = p.name || p.patientName || p.patient_name || 'Unknown';
             const age = p.age || '—';
             const risk = p.riskLevel || p.risk_level || 'Low';
-            const disease = p.disease || p.primaryDisease || p.primary_disease || '—';
+            const disease = p.diseases || p.disease || p.primaryDisease || p.primary_disease || '—';
             const initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
             const avatarClass = avatarColors[i % avatarColors.length];
 
@@ -274,5 +274,5 @@
 
     // --- Init ---
     await loadPatients();
-})();
+});
 </script>
