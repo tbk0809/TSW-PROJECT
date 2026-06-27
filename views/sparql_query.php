@@ -370,12 +370,20 @@ ORDER BY DESC(?age)`
             document.getElementById('queryTimeValue').textContent = elapsed + 'ms';
             document.getElementById('queryTime').style.display = 'flex';
 
-            // Parse results
-            let headers = [];
-            let rows = [];
+            // Parse results — unwrap API wrapper if present
+            let sparqlData = result.data || result;
 
-            if (result.results && result.results.bindings) {
+            if (sparqlData.results && sparqlData.results.bindings) {
                 // Standard SPARQL JSON format
+                headers = sparqlData.head?.vars || [];
+                rows = sparqlData.results.bindings.map(binding => {
+                    return headers.map(h => {
+                        const v = binding[h];
+                        return v ? (v.value || v) : '';
+                    });
+                });
+            } else if (result.results && result.results.bindings) {
+                // Direct SPARQL format (no wrapper)
                 headers = result.head?.vars || [];
                 rows = result.results.bindings.map(binding => {
                     return headers.map(h => {

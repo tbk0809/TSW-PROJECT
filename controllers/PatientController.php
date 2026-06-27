@@ -54,8 +54,11 @@ class PatientController
                 ?patient rdf:type cds:Patient .
                 OPTIONAL { ?patient cds:patientID ?patientID . }
                 OPTIONAL { ?patient cds:patientName ?patientName . }
-                OPTIONAL { ?patient cds:age ?age . }
-                OPTIONAL { ?patient cds:riskLevel ?riskLevel . }
+                OPTIONAL { ?patient cds:patientAge ?age . }
+                OPTIONAL { 
+                    ?patient cds:hasRiskLevel ?riskLevelInst .
+                    ?riskLevelInst rdfs:label ?riskLevel .
+                }
                 OPTIONAL {
                     ?patient cds:hasDiagnosis ?disease .
                     ?disease cds:diseaseName ?diseaseName .
@@ -113,10 +116,13 @@ class PatientController
                 ?patient rdf:type cds:Patient .
                 OPTIONAL { ?patient cds:patientID ?patientID . }
                 OPTIONAL { ?patient cds:patientName ?patientName . }
-                OPTIONAL { ?patient cds:age ?age . }
+                OPTIONAL { ?patient cds:patientAge ?age . }
                 OPTIONAL { ?patient cds:gender ?gender . }
                 OPTIONAL { ?patient cds:bloodType ?bloodType . }
-                OPTIONAL { ?patient cds:riskLevel ?riskLevel . }
+                OPTIONAL { 
+                    ?patient cds:hasRiskLevel ?riskLevelInst .
+                    ?riskLevelInst rdfs:label ?riskLevel . 
+                }
                 OPTIONAL { ?patient cds:admissionDate ?admissionDate . }
                 OPTIONAL { ?patient cds:contactNumber ?contactNumber . }
                 OPTIONAL { ?patient cds:address ?address . }
@@ -314,8 +320,11 @@ class PatientController
                 ?patient cds:patientName ?patientName .
                 FILTER (REGEX(?patientName, \"{$name}\", \"i\"))
                 OPTIONAL { ?patient cds:patientID ?patientID . }
-                OPTIONAL { ?patient cds:age ?age . }
-                OPTIONAL { ?patient cds:riskLevel ?riskLevel . }
+                OPTIONAL { ?patient cds:patientAge ?age . }
+                OPTIONAL { 
+                    ?patient cds:hasRiskLevel ?riskLevelInst .
+                    ?riskLevelInst rdfs:label ?riskLevel .
+                }
                 OPTIONAL {
                     ?patient cds:hasDiagnosis ?disease .
                     ?disease cds:diseaseName ?diseaseName .
@@ -371,11 +380,14 @@ class PatientController
                    (COUNT(DISTINCT ?symptom) AS ?symptomCount)
             WHERE {
                 ?patient rdf:type cds:Patient .
-                ?patient cds:riskLevel ?riskLevel .
+                OPTIONAL { 
+                    ?patient cds:hasRiskLevel ?riskLevelInst .
+                    ?riskLevelInst rdfs:label ?riskLevel .
+                }
                 FILTER (REGEX(?riskLevel, \"{$normalizedLevel}\", \"i\"))
                 OPTIONAL { ?patient cds:patientID ?patientID . }
                 OPTIONAL { ?patient cds:patientName ?patientName . }
-                OPTIONAL { ?patient cds:age ?age . }
+                OPTIONAL { ?patient cds:patientAge ?age . }
                 OPTIONAL { ?patient cds:hasSymptom ?symptom . }
                 OPTIONAL {
                     ?patient cds:hasDiagnosis ?disease .

@@ -86,7 +86,11 @@ try {
         ],
     };
 
-    echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if (isset($response['success']) && $response['success'] === false) {
+        http_response_code(400); // Send an HTTP error so Javascript's fetch() detects it
+    }
+    
+    echo json_encode($response, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
 } catch (\Throwable $e) {
     http_response_code(500);
     echo json_encode([
@@ -322,12 +326,15 @@ function handleSparql(): array
     // Try to get query from POST body
     $query = $_POST['query'] ?? '';
 
-    // If not in POST, try raw body (for JSON content type)
+    // If not in POST, try raw body (for JSON content type or plain text)
     if (empty($query)) {
         $rawBody = file_get_contents('php://input');
         $jsonBody = json_decode($rawBody, true);
         if (isset($jsonBody['query'])) {
             $query = $jsonBody['query'];
+        } elseif (!empty(trim($rawBody))) {
+            // Frontend sends the query as plain text body
+            $query = trim($rawBody);
         }
     }
 

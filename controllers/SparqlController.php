@@ -138,7 +138,7 @@ SELECT ?patient ?patientName ?age ?riskLevel
 WHERE {
     ?patient rdf:type cds:Patient .
     OPTIONAL { ?patient cds:patientName ?patientName . }
-    OPTIONAL { ?patient cds:age ?age . }
+    OPTIONAL { ?patient cds:patientAge ?age . }
     OPTIONAL { ?patient cds:riskLevel ?riskLevel . }
 }
 ORDER BY ?patientName",

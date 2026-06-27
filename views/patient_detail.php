@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function loadPatient() {
         try {
             const data = await apiFetch('patient', { params: { id: patientId } });
-            patientData = data.patient || data;
+            patientData = data.data || data.patient || data;
             renderPatient();
         } catch (err) {
             document.getElementById('heroName').textContent = 'Patient Not Found';
@@ -452,8 +452,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('heroAge').textContent = age;
 
         const heroRisk = document.getElementById('heroRisk');
-        heroRisk.textContent = risk + ' Risk';
-        const rl = risk.toLowerCase();
+        const riskDisplay = risk.toLowerCase().includes('risk') ? risk : risk + ' Risk';
+        heroRisk.textContent = riskDisplay;
+        const rl = risk.toLowerCase().replace(/\s*risk\s*/i, '').trim();
         heroRisk.className = 'patient-hero-risk risk-hero-' + (rl === 'moderate' ? 'medium' : rl);
 
         // Symptoms

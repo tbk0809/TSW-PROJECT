@@ -162,7 +162,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         filteredPatients = allPatients.filter(p => {
             const name = (p.name || p.patientName || p.patient_name || '').toLowerCase();
-            const risk = (p.riskLevel || p.risk_level || '').toLowerCase();
+            const rawRisk = (p.riskLevel || p.risk_level || '').toLowerCase();
+            const risk = rawRisk.replace(/\s*risk\s*/g, '').trim();
             const matchSearch = !searchTerm || name.includes(searchTerm);
             const matchRisk = riskFilter === 'all' || risk === riskFilter || (riskFilter === 'medium' && risk === 'moderate');
             return matchSearch && matchRisk;
