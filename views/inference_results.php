@@ -328,11 +328,21 @@ document.addEventListener('DOMContentLoaded', async function() {
             const patients = Array.isArray(data) ? data : (data.patients || data.data || []);
             const selector = document.getElementById('patientSelector');
             patients.forEach(p => {
-                const id = p.id || p.patientID || p.patientId || p.patient_id || '';
+                const displayId = p.patientID || p.id || p.patientId || '';
+                let valueId = displayId;
+                
+                // Extract local name from URI for the value
+                if (p.uri) {
+                    const parts = p.uri.split(/[\/#]/);
+                    valueId = parts[parts.length - 1];
+                } else if (!valueId) {
+                    valueId = '';
+                }
+                
                 const name = p.name || p.patientName || p.patient_name || 'Unknown';
                 const opt = document.createElement('option');
-                opt.value = id;
-                opt.textContent = `${name} (${id})`;
+                opt.value = valueId;
+                opt.textContent = `${name} (${displayId})`;
                 selector.appendChild(opt);
             });
         } catch(e) { /* silent */ }

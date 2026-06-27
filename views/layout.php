@@ -920,6 +920,22 @@
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- Connection Error Modal -->
+<div class="modal-overlay" id="connectionErrorModal" style="display:none; align-items:center; justify-content:center;">
+    <div class="modal" style="background:var(--white); border-radius:var(--radius-xl); padding:32px; max-width:500px; width:90%; box-shadow:var(--shadow-xl);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0; color:var(--danger); display:flex; align-items:center; gap:10px;"><span style="font-size:24px;">⚠️</span> Database Connection Failed</h3>
+            <button onclick="document.getElementById('connectionErrorModal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
+        </div>
+        <p style="margin-bottom:12px; line-height:1.6;">The system was unable to connect to the Apache Jena Fuseki database.</p>
+        <p style="margin-bottom:24px; color:var(--text-muted); font-size:14px; line-height:1.6;">Please make sure the <code>fuseki-server.bat</code> is running and the database is online on port 3030.</p>
+        <div style="display:flex; justify-content:flex-end; gap:12px;">
+            <button onclick="document.getElementById('connectionErrorModal').style.display='none'" class="btn btn-outline">Dismiss</button>
+            <button onclick="window.location.reload()" class="btn btn-primary">Retry Connection</button>
+        </div>
+    </div>
+</div>
+
 <!-- Main Content -->
 <main class="main-content" id="mainContent">
     <?php
@@ -1024,14 +1040,44 @@ async function apiFetch(action, options = {}) {
 
     try {
         const response = await fetch(url, fetchOptions);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            throw new Error('Invalid JSON response from API');
         }
-        const data = await response.json();
+
+        // Check if API returned a cURL connection error (Fuseki is down)
+        if (data && data.success === false && data.error && (data.error.includes('Connection refused') || data.error.includes('Failed to connect'))) {
+            throw new Error('DATABASE_CONNECTION_FAILED');
+        }
+
+        if (!response.ok) {
+            throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+
         return data;
     } catch (err) {
         console.error('API Error:', err);
-        showToast('error', 'API Error', err.message || 'An unexpected error occurred.');
+        
+        if (err.message === 'DATABASE_CONNECTION_FAILED' || err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+            // Show modal
+            document.getElementById('connectionErrorModal').style.display = 'flex';
+            
+            // Update system status indicator to red
+            const indicator = document.querySelector('.status-indicator');
+            if (indicator) {
+                indicator.style.background = 'var(--danger)';
+                indicator.nextSibling.textContent = ' System Offline';
+            }
+        } else {
+            showToast('error', 'API Error', err.message || 'An unexpected error occurred.');
+        }
+        
         throw err;
     }
 }

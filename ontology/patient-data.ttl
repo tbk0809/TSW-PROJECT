@@ -317,7 +317,7 @@ cds:Patient_003
                             cds:FrequentUrination ,
                             cds:BlurredVision ;
     cds:diagnosedWith       cds:Type2Diabetes ;
-    cds:prescribedMedication cds:Metformin ;
+    cds:prescribedMedication cds:Metformin , cds:Diazepam ;
     cds:hasRiskLevel        cds:MediumRisk_Instance ;
     cds:hasLabResult        cds:LabResult_003 ;
     cds:hasClinicalRecord   cds:ClinicalRecord_003 .
@@ -349,7 +349,8 @@ cds:Patient_005
     cds:patientAge          28 ;
     cds:patientID           "P005"^^xsd:string ;
     cds:hasSymptom          cds:Rash ,
-                            cds:Itching ;
+                            cds:Itching ,
+                            cds:Fever  ;
     cds:diagnosedWith       cds:AllergicReaction ;
     cds:prescribedMedication cds:Antihistamine ;
     cds:hasRiskLevel        cds:LowRisk_Instance ;
@@ -383,7 +384,8 @@ cds:Patient_007
     cds:patientAge          35 ;
     cds:patientID           "P007"^^xsd:string ;
     cds:hasSymptom          cds:Headache ,
-                            cds:Nausea ;
+                            cds:Nausea ,
+                            cds:Dizziness ;
     cds:diagnosedWith       cds:Migraine ;
     cds:prescribedMedication cds:Sumatriptan ;
     cds:hasRiskLevel        cds:LowRisk_Instance ;

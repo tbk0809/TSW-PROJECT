@@ -56,9 +56,13 @@ class InferenceService
 
         // ── Rule 1: Classify patients with 3+ symptoms as HighRiskPatient ────
         $rule1 = $this->prefixes . "
+            DELETE {
+                ?patient cds:hasRiskLevel ?oldRisk .
+            }
             INSERT {
                 ?patient rdf:type cds:HighRiskPatient .
                 ?patient cds:riskLevel \"High\" .
+                ?patient cds:hasRiskLevel cds:HighRisk_Instance .
             }
             WHERE {
                 ?patient rdf:type cds:Patient .
@@ -71,6 +75,7 @@ class InferenceService
                     HAVING (COUNT(?symptom) >= 3)
                 }
                 FILTER NOT EXISTS { ?patient rdf:type cds:HighRiskPatient }
+                OPTIONAL { ?patient cds:hasRiskLevel ?oldRisk . }
             }
         ";
 
@@ -152,7 +157,7 @@ class InferenceService
                 ?medication cds:treatsDisease ?disease .
                 FILTER NOT EXISTS { ?patient cds:recommendedMedication ?medication }
                 FILTER NOT EXISTS {
-                    ?patient cds:takesMedication ?currentMed .
+                    ?patient cds:prescribedMedication ?currentMed .
                     ?currentMed cds:contraindicatedWith ?medication .
                 }
             }
@@ -331,7 +336,7 @@ class InferenceService
                 OPTIONAL { ?patient cds:patientName ?patientName . }
                 OPTIONAL { ?patient cds:hasSymptom ?symptom . }
                 OPTIONAL { ?patient cds:hasDiagnosis ?disease . }
-                OPTIONAL { ?patient cds:takesMedication ?medication . }
+                OPTIONAL { ?patient cds:prescribedMedication ?medication . }
                 OPTIONAL { ?patient cds:riskLevel ?riskLevel . }
             }
             GROUP BY ?patientName ?riskLevel
@@ -427,8 +432,8 @@ class InferenceService
             SELECT DISTINCT ?med1 ?med1Name ?med2 ?med2Name ?severity
             WHERE {
                 BIND(<{$patientURI}> AS ?patient)
-                ?patient cds:takesMedication ?med1 .
-                ?patient cds:takesMedication ?med2 .
+                ?patient cds:prescribedMedication ?med1 .
+                ?patient cds:prescribedMedication ?med2 .
                 ?med1 cds:contraindicatedWith ?med2 .
                 FILTER (?med1 != ?med2)
                 OPTIONAL { ?med1 cds:medicationName ?med1Name . }
@@ -444,8 +449,8 @@ class InferenceService
             SELECT DISTINCT ?med1 ?med1Name ?med2 ?med2Name ?interactionType ?description
             WHERE {
                 BIND(<{$patientURI}> AS ?patient)
-                ?patient cds:takesMedication ?med1 .
-                ?patient cds:takesMedication ?med2 .
+                ?patient cds:prescribedMedication ?med1 .
+                ?patient cds:prescribedMedication ?med2 .
                 ?med1 cds:interactsWith ?med2 .
                 FILTER (?med1 != ?med2)
                 OPTIONAL { ?med1 cds:medicationName ?med1Name . }
@@ -462,7 +467,7 @@ class InferenceService
             SELECT DISTINCT ?currentMed ?currentMedName ?recommendedMed ?recommendedMedName
             WHERE {
                 BIND(<{$patientURI}> AS ?patient)
-                ?patient cds:takesMedication ?currentMed .
+                ?patient cds:prescribedMedication ?currentMed .
                 ?patient cds:recommendedMedication ?recommendedMed .
                 ?currentMed cds:contraindicatedWith ?recommendedMed .
                 OPTIONAL { ?currentMed cds:medicationName ?currentMedName . }

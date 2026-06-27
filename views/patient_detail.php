@@ -634,9 +634,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         const section = document.getElementById('explanationSection');
 
         let explArr = [];
-        if (Array.isArray(explanations)) explArr = explanations;
-        else if (typeof explanations === 'string') explArr = [explanations];
-        else if (typeof explanations === 'object') {
+        if (Array.isArray(explanations)) {
+            explArr = explanations.map(e => {
+                if (typeof e === 'string') return e;
+                if (e.text) return `<strong>${e.category || 'Explanation'}:</strong> ${e.text}`;
+                return JSON.stringify(e);
+            });
+        } else if (typeof explanations === 'string') {
+            explArr = [explanations];
+        } else if (typeof explanations === 'object') {
             Object.entries(explanations).forEach(([key, val]) => {
                 explArr.push(`<strong>${key}:</strong> ${val}`);
             });

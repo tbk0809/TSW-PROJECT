@@ -188,7 +188,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         const avatarColors = ['patient-avatar-1','patient-avatar-2','patient-avatar-3','patient-avatar-4','patient-avatar-5'];
 
         tbody.innerHTML = pageData.map((p, i) => {
-            const id = p.patientID || p.id || p.patientId || p.patient_id || '';
+            const displayId = p.patientID || p.id || p.patientId || p.patient_id || '';
+            let id = displayId;
+            if (p.uri) {
+                const parts = p.uri.split(/[\/#]/);
+                id = parts[parts.length - 1];
+            }
+            
             const name = p.name || p.patientName || p.patient_name || 'Unknown';
             const age = p.age || '—';
             const risk = p.riskLevel || p.risk_level || 'Low';
@@ -198,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             return `
                 <tr style="animation: fadeInUp 0.3s ease ${i * 0.04}s both;">
-                    <td><code style="font-size:12px;color:var(--text-muted);background:rgba(26,43,74,0.04);padding:3px 8px;border-radius:4px;">${escapeHtml(String(id))}</code></td>
+                    <td><code style="font-size:12px;color:var(--text-muted);background:rgba(26,43,74,0.04);padding:3px 8px;border-radius:4px;">${escapeHtml(String(displayId))}</code></td>
                     <td>
                         <div class="patient-name-cell">
                             <div class="patient-avatar ${avatarClass}">${initials}</div>

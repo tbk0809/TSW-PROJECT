@@ -99,10 +99,7 @@ class SparqlService
 
         // Handle cURL-level errors
         if ($response === false) {
-            return [
-                'success' => false,
-                'error'   => 'cURL request failed: ' . $curlError,
-            ];
+            throw new \RuntimeException('DATABASE_CONNECTION_FAILED: cURL request failed: ' . $curlError);
         }
 
         // Handle HTTP error responses
@@ -190,10 +187,7 @@ class SparqlService
         curl_close($ch);
 
         if ($response === false) {
-            return [
-                'success' => false,
-                'error'   => 'cURL request failed: ' . $curlError,
-            ];
+            throw new \RuntimeException('DATABASE_CONNECTION_FAILED: cURL request failed: ' . $curlError);
         }
 
         if ($httpCode < 200 || $httpCode >= 300) {

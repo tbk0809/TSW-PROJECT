@@ -221,15 +221,42 @@ function handleDiagnose(): array
     $controller = new \Controllers\DiagnosisController();
     $result = $controller->diagnose($symptoms);
 
-    // If the diagnose method already returns a structured response, use it
-    if (isset($result['success'])) {
+    if (isset($result['success']) && $result['success']) {
+        $allMedications = [];
+        
+        // Fetch medications for each diagnosed disease
+        foreach ($result['diseases'] as &$disease) {
+            $medResult = $controller->getSuggestedMedications($disease['diseaseURI']);
+            if ($medResult['success']) {
+                $disease['medications'] = [];
+                foreach ($medResult['medications'] as $med) {
+                    $disease['medications'][] = $med['name'];
+                    if (!in_array($med['name'], $allMedications)) {
+                        $allMedications[] = $med['name'];
+                    }
+                }
+            } else {
+                $disease['medications'] = [];
+            }
+        }
+        unset($disease);
+
+        // Check for contraindications among all suggested medications
+        $contraResult = $controller->checkContraindications($allMedications);
+        $result['contraindications'] = [];
+        if ($contraResult['success'] && $contraResult['hasWarnings']) {
+            foreach ($contraResult['warnings'] as $warning) {
+                $result['contraindications'][] = $warning['message'] ?? "Warning: {$warning['med1']} interacts with {$warning['med2']}";
+            }
+        }
+        
         $result['timestamp'] = date('c');
         return $result;
     }
 
     return [
-        'success'   => true,
-        'data'      => $result,
+        'success'   => false,
+        'error'     => 'Diagnosis failed.',
         'timestamp' => date('c'),
     ];
 }
