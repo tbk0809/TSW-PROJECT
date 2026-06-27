@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const patients = Array.isArray(data) ? data : (data.patients || data.data || []);
             const selector = document.getElementById('patientSelector');
             patients.forEach(p => {
-                const id = p.id || p.patientId || p.patient_id || '';
+                const id = p.id || p.patientID || p.patientId || p.patient_id || '';
                 const name = p.name || p.patientName || p.patient_name || 'Unknown';
                 const opt = document.createElement('option');
                 opt.value = id;
@@ -380,10 +380,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         btn.disabled = true;
 
         try {
-            let params = {};
-            if (patientId) params.patientId = patientId;
+            if (!patientId) {
+                loading.classList.remove('active');
+                btn.disabled = false;
+                showToast('warning', 'Patient Required', 'Please select a patient from the dropdown to run inference.');
+                return;
+            }
 
-            const result = await apiFetch('classify', { params });
+            let params = { patientId: patientId };
+            const result = await apiFetch('inference', { params });
 
             loading.classList.remove('active');
 

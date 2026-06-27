@@ -145,6 +145,9 @@ class InferenceController
     public function getInferredFacts(string $patientID): array
     {
         try {
+            // Run reasoning first to ensure Fuseki has inferred data
+            $this->inferenceService->runReasoning();
+
             // Get classification
             $classification = $this->inferenceService->classifyPatientRisk($patientID);
 
@@ -154,14 +157,70 @@ class InferenceController
                 $patientURI = CDS_NAMESPACE . $patientID;
             }
 
-            // Get inferred triples
+            // Get inferred triples structured data
             $inferredTriples = $this->inferenceService->getInferredTriples($patientURI);
 
             // Get drug interactions
             $drugInteractions = $this->inferenceService->checkDrugInteractions($patientID);
 
+            // Generate flat triples array for the UI
+            $triples = [];
+            if ($inferredTriples['success']) {
+                $data = $inferredTriples['data'];
+                foreach ($data['classTypes'] as $type) {
+                    $triples[] = [
+                        'subject'   => $patientURI,
+                        'predicate' => 'rdf:type',
+                        'object'    => CDS_NAMESPACE . $type
+                    ];
+                }
+                if (!empty($data['riskLevel'])) {
+                    $triples[] = [
+                        'subject'   => $patientURI,
+                        'predicate' => CDS_NAMESPACE . 'hasRiskLevel',
+                        'object'    => CDS_NAMESPACE . $data['riskLevel'] . 'Risk_Instance'
+                    ];
+                }
+                foreach ($data['recommendedMedications'] as $med) {
+                    $triples[] = [
+                        'subject'   => $patientURI,
+                        'predicate' => CDS_NAMESPACE . 'recommendedMedication',
+                        'object'    => $med
+                    ];
+                }
+                if (!empty($data['requiresSpecialist'])) {
+                    $triples[] = [
+                        'subject'   => $patientURI,
+                        'predicate' => CDS_NAMESPACE . 'requiresSpecialistReview',
+                        'object'    => 'true'
+                    ];
+                }
+                foreach ($data['relatedConditions'] as $cond) {
+                    $triples[] = [
+                        'subject'   => $patientURI,
+                        'predicate' => CDS_NAMESPACE . 'hasRelatedCondition',
+                        'object'    => $cond
+                    ];
+                }
+            }
+
+            if ($drugInteractions['success'] && !empty($drugInteractions['data']['interactions'])) {
+                foreach ($drugInteractions['data']['interactions'] as $interaction) {
+                    $triples[] = [
+                        'subject'   => CDS_NAMESPACE . $interaction['medication1'],
+                        'predicate' => CDS_NAMESPACE . 'interactsWith',
+                        'object'    => CDS_NAMESPACE . $interaction['medication2']
+                    ];
+                }
+            }
+
+            // Get explanations
+            $explanations = $this->inferenceService->explainInference($patientID);
+
             return [
                 'success' => true,
+                'triples' => $triples,
+                'explanations' => $explanations['success'] ? $explanations['data']['explanations'] : [],
                 'data'    => [
                     'patientID'        => $patientID,
                     'classification'   => $classification['success'] ? $classification['data'] : null,
