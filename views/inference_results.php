@@ -328,10 +328,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             const patients = Array.isArray(data) ? data : (data.patients || data.data || []);
             const selector = document.getElementById('patientSelector');
             patients.forEach(p => {
-                const id = p.id || p.patientId || p.patient_id || '';
+                // Prefer the full URI so the controller can resolve it directly;
+                // fall back to patientID if no URI is present.
+                const uri = p.uri || '';
+                const id  = p.patientID || p.patientId || p.patient_id || '';
                 const name = p.name || p.patientName || p.patient_name || 'Unknown';
                 const opt = document.createElement('option');
-                opt.value = id;
+                opt.value = uri || id;   // full URI preferred
                 opt.textContent = `${name} (${id})`;
                 selector.appendChild(opt);
             });

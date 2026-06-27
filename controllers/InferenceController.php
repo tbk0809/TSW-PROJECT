@@ -37,82 +37,216 @@ class InferenceController
     }
 
     /**
-     * Run OWL classification on all patients in the dataset.
+     * Run OWL classification, optionally scoped to one patient.
      *
-     * Triggers the inference engine to apply all classification rules
-     * (HighRiskPatient, DiagnosedPatient, ComplexCase) and materialize
-     * the resulting inferred triples into the Fuseki triple store.
+     * When $patientId is supplied the engine still materialises all inference
+     * rules (so the graph is up-to-date), then returns triples[] and
+     * explanations[] scoped to that patient — the shape the JS frontend
+     * renders in the Inference Results table.
      *
-     * @return array Structured response with classification results for all patients:
-     *               [
-     *                   'success' => true/false,
-     *                   'reasoning' => [...],     // Results from inference rule application
-     *                   'patients' => [...]        // Per-patient classification summaries
-     *               ]
+     * When $patientId is null every patient is classified and the same
+     * triples[] / explanations[] arrays are built by aggregating across all
+     * patients, so the table is never empty after classification.
+     *
+     * @param string|null $patientId Patient local-name (e.g. "Patient_007") or null for all
+     *
+     * @return array Structured response including triples[], explanations[], patients[], summary
      */
-    public function runClassification(): array
+    public function runClassification(?string $patientId = null): array
     {
         try {
-            // Step 1: Run the reasoning engine to materialize inferred triples
+            // Always materialise inferred triples first so the graph is current
             $reasoningResult = $this->inferenceService->runReasoning();
 
-            // Step 2: Get all patients and classify each one
             $prefixes = "PREFIX cds: <http://www.semanticweb.org/clinical-decision-system#>\n"
                 . "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
 
-            $sparql = $prefixes . "
-                SELECT DISTINCT ?patient ?patientID ?patientName
-                WHERE {
-                    ?patient rdf:type cds:Patient .
-                    OPTIONAL { ?patient cds:patientID ?patientID . }
-                    OPTIONAL { ?patient cds:patientName ?patientName . }
+            // ── Fetch the list of patients to classify ──────────────────────
+            if ($patientId !== null) {
+                // Single patient: build URI and resolve name
+                $patientURI  = str_starts_with($patientId, 'http') ? $patientId : (CDS_NAMESPACE . $patientId);
+                $nameSparql  = $prefixes . "
+                    SELECT ?patientID ?patientName WHERE {
+                        BIND(<{$patientURI}> AS ?patient)
+                        OPTIONAL { ?patient cds:patientID ?patientID . }
+                        OPTIONAL { ?patient cds:patientName ?patientName . }
+                    }
+                ";
+                $nameResult  = $this->sparqlService->query($nameSparql);
+                $nameRow     = $nameResult['data']['results']['bindings'][0] ?? [];
+                $patientsToProcess = [[
+                    'uri'  => $patientURI,
+                    'id'   => $nameRow['patientID']['value'] ?? $this->extractLocalName($patientURI),
+                    'name' => $nameRow['patientName']['value'] ?? $this->extractLocalName($patientURI),
+                ]];
+            } else {
+                // All patients
+                $allSparql = $prefixes . "
+                    SELECT DISTINCT ?patient ?patientID ?patientName
+                    WHERE {
+                        ?patient rdf:type cds:Patient .
+                        OPTIONAL { ?patient cds:patientID ?patientID . }
+                        OPTIONAL { ?patient cds:patientName ?patientName . }
+                    }
+                    ORDER BY ?patientName
+                ";
+                $allResult = $this->sparqlService->query($allSparql);
+                $patientsToProcess = [];
+                foreach ($allResult['data']['results']['bindings'] ?? [] as $row) {
+                    $uri = $row['patient']['value'] ?? '';
+                    $patientsToProcess[] = [
+                        'uri'  => $uri,
+                        'id'   => $row['patientID']['value'] ?? $this->extractLocalName($uri),
+                        'name' => $row['patientName']['value'] ?? 'Unknown',
+                    ];
                 }
-                ORDER BY ?patientName
-            ";
+            }
 
-            $patientsResult = $this->sparqlService->query($sparql);
+            // ── Classify each patient and build flat triples[] array ─────────
             $patientClassifications = [];
+            $triples      = [];   // flat [{subject, predicate, object}] for the JS table
+            $explanations = [];   // [{title, text}] for the Explanations section
 
-            if ($patientsResult['success'] && !empty($patientsResult['data']['results']['bindings'])) {
-                foreach ($patientsResult['data']['results']['bindings'] as $row) {
-                    $patientURI = $row['patient']['value'] ?? '';
-                    $patientID  = $row['patientID']['value'] ?? $this->extractLocalName($patientURI);
-                    $patientName = $row['patientName']['value'] ?? 'Unknown';
+            foreach ($patientsToProcess as $p) {
+                $classification = $this->inferenceService->classifyPatientRisk($p['uri']);
 
-                    // Classify this patient
-                    $classification = $this->inferenceService->classifyPatientRisk($patientURI);
+                if (!$classification['success']) {
+                    continue;
+                }
 
-                    if ($classification['success']) {
-                        $patientClassifications[] = [
-                            'patientID'       => $patientID,
-                            'patientName'     => $patientName,
-                            'riskLevel'       => $classification['data']['riskLevel'],
-                            'classifications' => $classification['data']['classifications'],
-                            'isHighRisk'      => $classification['data']['isHighRisk'],
-                            'isDiagnosed'     => $classification['data']['isDiagnosed'],
-                            'isComplexCase'   => $classification['data']['isComplexCase'],
-                        ];
+                $data = $classification['data'];
+                $label = $data['patientName'] ?? $p['name'];
+
+                $patientClassifications[] = [
+                    'patientID'       => $p['id'],
+                    'patientName'     => $label,
+                    'riskLevel'       => $data['riskLevel'],
+                    'classifications' => $data['classifications'],
+                    'isHighRisk'      => $data['isHighRisk'],
+                    'isDiagnosed'     => $data['isDiagnosed'],
+                    'isComplexCase'   => $data['isComplexCase'],
+                ];
+
+                // Build inferred triples for every OWL class membership
+                foreach ($data['classifications'] as $cls) {
+                    $triples[] = [
+                        'subject'   => $label,
+                        'predicate' => 'rdf:type',
+                        'object'    => $cls,
+                    ];
+                }
+
+                // Risk level triple
+                $triples[] = [
+                    'subject'   => $label,
+                    'predicate' => 'cds:riskLevel',
+                    'object'    => $data['riskLevel'],
+                ];
+
+                // Explanation entry
+                $classStr = implode(', ', $data['classifications']) ?: 'LowRisk';
+                $explanations[] = [
+                    'title' => "{$label} — {$data['riskLevel']} Risk",
+                    'text'  => "{$label} has {$data['symptomCount']} symptom(s) and "
+                        . "{$data['diseaseCount']} diagnosis/diagnoses. "
+                        . "Inferred class(es): {$classStr}.",
+                ];
+
+                // If scoped to one patient also pull inferred triples from the graph
+                if ($patientId !== null) {
+                    $inferredResult = $this->inferenceService->getInferredTriples($p['uri']);
+                    if ($inferredResult['success']) {
+                        $inf = $inferredResult['data'];
+
+                        // Related conditions from transitive property
+                        foreach ($inf['relatedConditions'] as $cond) {
+                            $triples[] = [
+                                'subject'   => $label,
+                                'predicate' => 'cds:isRelatedConditionOf (transitive)',
+                                'object'    => $cond['name'],
+                            ];
+                        }
+
+                        // Recommended medications from forward-chaining
+                        foreach ($inf['recommendedMedications'] as $med) {
+                            $triples[] = [
+                                'subject'   => $label,
+                                'predicate' => 'cds:recommendedMedication',
+                                'object'    => $med['name'],
+                            ];
+                        }
+
+                        if ($inf['requiresSpecialist']) {
+                            $triples[] = [
+                                'subject'   => $label,
+                                'predicate' => 'cds:requiresSpecialistReview',
+                                'object'    => 'true',
+                            ];
+                            $explanations[] = [
+                                'title' => 'Specialist Review Required',
+                                'text'  => "{$label} meets the ComplexCase criteria and has been flagged for specialist review.",
+                            ];
+                        }
+                    }
+
+                    // Drug interactions
+                    $drugResult = $this->inferenceService->checkDrugInteractions($p['uri']);
+                    if ($drugResult['success']) {
+                        $interactions     = $drugResult['data']['interactions'] ?? [];
+                        $contraindications = $drugResult['data']['contraindications'] ?? [];
+
+                        foreach ($contraindications as $ci) {
+                            $m1 = $ci['med1Name'] ?? $ci['med1'] ?? '?';
+                            $m2 = $ci['med2Name'] ?? $ci['med2'] ?? '?';
+                            $triples[] = [
+                                'subject'   => $m1,
+                                'predicate' => 'cds:contraindicatedWith',
+                                'object'    => $m2,
+                            ];
+                            $explanations[] = [
+                                'title' => "⚠️ Contraindication: {$m1} ↔ {$m2}",
+                                'text'  => "Prescribed medications {$m1} and {$m2} are contraindicated for {$label}.",
+                            ];
+                        }
+
+                        foreach ($interactions as $ia) {
+                            $m1 = $ia['med1Name'] ?? $ia['med1'] ?? '?';
+                            $m2 = $ia['med2Name'] ?? $ia['med2'] ?? '?';
+                            $triples[] = [
+                                'subject'   => $m1,
+                                'predicate' => 'cds:interactsWith',
+                                'object'    => $m2,
+                            ];
+                        }
+
+                        if (empty($interactions) && empty($contraindications)) {
+                            $explanations[] = [
+                                'title' => 'Inference Rule',
+                                'text'  => 'No drug interactions or contraindications found for this patient.',
+                            ];
+                        }
                     }
                 }
             }
 
-            // Summary stats
             $totalPatients  = count($patientClassifications);
             $highRiskCount  = count(array_filter($patientClassifications, fn($p) => $p['isHighRisk']));
             $diagnosedCount = count(array_filter($patientClassifications, fn($p) => $p['isDiagnosed']));
             $complexCount   = count(array_filter($patientClassifications, fn($p) => $p['isComplexCase']));
 
             return [
-                'success'   => true,
-                'reasoning' => $reasoningResult,
-                'patients'  => $patientClassifications,
-                'summary'   => [
+                'success'      => true,
+                'triples'      => $triples,       // ← what the JS table reads
+                'explanations' => $explanations,  // ← what the JS explanations panel reads
+                'reasoning'    => $reasoningResult,
+                'patients'     => $patientClassifications,
+                'summary'      => [
                     'totalPatients'     => $totalPatients,
                     'highRiskPatients'  => $highRiskCount,
                     'diagnosedPatients' => $diagnosedCount,
                     'complexCases'      => $complexCount,
                 ],
-                'message'   => "Classification complete. {$totalPatients} patients processed: "
+                'message' => "Classification complete. {$totalPatients} patient(s) processed: "
                     . "{$highRiskCount} high risk, {$diagnosedCount} diagnosed, {$complexCount} complex cases.",
             ];
         } catch (\Exception $e) {
