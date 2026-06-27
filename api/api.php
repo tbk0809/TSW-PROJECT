@@ -372,16 +372,19 @@ function handleDashboard(): array
 }
 
 /**
- * Handle GET ?action=classify
+ * Handle GET ?action=classify[&patientId={id}]
  *
- * Runs OWL classification on all patients and returns results.
+ * Runs OWL classification. When patientId is supplied only that patient's
+ * inferred facts are returned; otherwise all patients are classified.
  *
  * @return array JSON-serializable response
  */
 function handleClassify(): array
 {
+    $patientId = $_GET['patientId'] ?? '';
+
     $controller = new \Controllers\InferenceController();
-    $result = $controller->runClassification();
+    $result = $controller->runClassification($patientId ?: null);
 
     $result['timestamp'] = date('c');
     return $result;
